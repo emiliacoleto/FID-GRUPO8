@@ -8,9 +8,9 @@ countries <- c('Spain', 'France', 'Germany', 'England', 'Portugal', 'Cuba', 'Chi
 country <- sample(countries, 918, replace = TRUE)
 
 # Los agregamos al dataframe
-data$weigth <- weigth
-data$heigth <- heigth
-data$country <- country
+data$Weigth <- weigth
+data$Heigth <- heigth
+data$Country <- country
 
 # Visualizamos los datos
 View(data)

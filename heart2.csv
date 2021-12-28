@@ -1,4 +1,4 @@
-"Age","Sex","ChestPainType","RestingBP","Cholesterol","FastingBS","RestingECG","MaxHR","ExerciseAngina","Oldpeak","ST_Slope","HeartDisease","weigth","heigth","country"
+"Age","Sex","ChestPainType","RestingBP","Cholesterol","FastingBS","RestingECG","MaxHR","ExerciseAngina","Oldpeak","ST_Slope","HeartDisease","Weigth","Heigth","Country"
 40,"M","ATA",140,289,0,"Normal",172,"N",0,"Up",0,71.86,1.77,"England"
 49,"F","NAP",160,180,0,"Normal",156,"N",1,"Flat",1,68.23,1.54,"Spain"
 37,"M","ATA",130,283,0,"ST",98,"N",0,"Up",0,138.82,1.68,"South Africa"
