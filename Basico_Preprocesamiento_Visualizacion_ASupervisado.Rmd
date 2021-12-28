@@ -16,6 +16,11 @@ library(tidyverse)
 heart <- read.csv('heart.csv')
 View(heart)
 
+colnames(heart)
+dim(heart)
+
+names(heart$Age)
+
 ```
 
 ## R Markdown
@@ -24,7 +29,44 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r Preprocesamiento 1: Detección y eliminación de outliers}
+```{r Preprocesamiento 1: Valores perdidos y Filas duplicadas}
+#Buscamos si hay algún valor que sea un espacio en blanco, NaN o haya alguna observación duplicada.
+
+heart <- read.table("heart.csv", na.strings="", header=TRUE, sep=",", dec=".")
+#Se va a interpretar todos aquellos huecos en blanco como NA (Not Available).
+str(heart)
+
+#POdemos comprobar de dos formas que no contiene NA. 
+#1º Haciendo tablas de frecuencia para ver que valores toman las observaciones en cada atributo
+
+attach(heart)#attacha "engancha" el contenido del dataframe al entorno donde R busca los nombres de las variables
+
+table(Cholesterol)
+table(Age)
+table(Sex)
+table(ChestPainType)
+table(RestingBP)
+table(FastingBS)
+table(RestingECG)
+table(MaxHR)
+table(ExerciseAngina)
+table(Oldpeak)
+table(ST_Slope)
+table(HeartDisease)
+
+#2º Detectando con la funcion complete.cases si hay algun NA (Devolveria false en aquella observación que tuviera un NA). Todos son TRUE
+complete.cases(heart)
+
+
+#Por otro lado queremos saber si hay observaciones 
+duplicated(heart)#Todas las observaciones son únicas, ya que devuelven FALSE. Si hubiera al menos dos duplicadas, aparecerían como TRUE
+
+
+#Concluimos que no hay ni espacios en blanco ni NA en nuestro Dataframe inicial.
+
+```
+
+```{r Preprocesamiento 2: Detección y eliminación de outliers}
 #Para ello, haremos uso del comando boxplot (Diagrama de cajas y bigotes para encontrar los outliers y el filtrado del paquete dplyr para eliminarlos del dataset y quedarnos con uno más limpio.
 #Nos fijaremos en los atributos con valores continuos.
  
@@ -38,7 +80,8 @@ boxplot(heart$Age, horizontal = TRUE)
 
 ```
 
-```{r Preprocesamiento 1: Detección y eliminación de outliers: Atributo RestingBP}
+
+```{r Preprocesamiento 2: Detección y eliminación de outliers: Atributo RestingBP}
 RestingBP <- heart$RestingBP
 
 boxplot(RestingBP, horizontal = TRUE) #Vemos que hay outliers
@@ -57,7 +100,7 @@ head(heart1)
 
 ```
 
-```{r Preprocesamiento 1: Detección y eliminación de outliers: Atributo Cholesterol}
+```{r Preprocesamiento 2: Detección y eliminación de outliers: Atributo Cholesterol}
 
 Cholesterol <- heart1$Cholesterol
 
@@ -79,7 +122,7 @@ head(heart2)
 
 ```
 
-```{r Preprocesamiento 1: Detección y eliminación de outliers: Atributo MaxHR}
+```{r Preprocesamiento 2: Detección y eliminación de outliers: Atributo MaxHR}
 
 MaxHR <- heart2$MaxHR
 boxplot(MaxHR, horizontal=TRUE)
@@ -89,7 +132,7 @@ str(heart2)
 
 ```
 
-```{r Preprocesamiento 1: Detección y eliminación de outliers: Atributo OldPeak. FIN de Preprocesamiento 1}
+```{r Preprocesamiento 2: Detección y eliminación de outliers: Atributo OldPeak. FIN de Preprocesamiento 1}
 
 OldPeak <- heart2$Oldpeak
 boxplot(OldPeak, horizontal=TRUE)
@@ -113,9 +156,8 @@ boxplot(heart3$Oldpeak, horizontal = TRUE)
 
 summary(heart3) #Resumen del dataframe "heart3"
 
-
-
 ```
+
 
 
 ## Including Plots
