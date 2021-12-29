@@ -37,6 +37,35 @@ write.csv(data,"heart3.csv", row.names = FALSE)
 
 ## Aplicación del análisis no supervisado
 
-```{r}
+### Clustering Jeraquizado
 
+```{r}
+data <- read.csv('heart2.csv', head = TRUE, na = "")
+
+library(ClustOfVar)
+
+xquant <- data[,c(1,4,5,6,8,10,12,13,14)] # Numeric variables
+xqual <- data[,c(2,3,7,9,11,15)]          # Categorical variables
+
+tree <- hclustvar(xquant, xqual)
+plot(tree)
 ```
+
+```{r}
+library(cluster)
+
+d <- dist(data, method="euclidean")
+# Keep in mind that this is only for mixed numeric and categorical data.
+# See the note below if you are using only numeric variables.
+
+fit <- hclust(d=d, method="complete")    # Also try: method="ward.D"   
+plot(fit, hang=-1)
+groups <- cutree(fit, k=4)   # "k=" defines the number of clusters you are using   
+rect.hclust(fit, k=4, border="red") # draw dendogram with red borders around the 4 clusters   
+```
+
+```{r}
+kfit <- kmeans(d, 3)
+clusplot(as.matrix(d), kfit$cluster, color=T, shade=T, labels=2, lines=0)
+```
+
