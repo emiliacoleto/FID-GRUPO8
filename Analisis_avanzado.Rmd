@@ -3,7 +3,7 @@ title: "Analisis_avanzado"
 output: html_document
 ---
 
-# Análisis Avanzado
+# Análisis Avanzado 
 
 ## Modificación del dataset
 
