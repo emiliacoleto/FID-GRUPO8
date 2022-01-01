@@ -1,3 +1,13 @@
+---
+title: "Analisis_avanzado"
+output: html_document
+---
+
+# Análisis Avanzado
+
+## Modificación del dataset
+
+```{r}
 # Leemos los datos del CSV
 data <- read.csv('heart.csv')
 
@@ -17,3 +27,16 @@ View(data)
 
 # Exportamos los nuevos datos a un CSV
 write.csv(data,"heart3.csv", row.names = FALSE)
+```
+
+## Preprocesamiento y visualización de datos
+
+```{r}
+
+```
+
+## Aplicación del análisis no supervisado
+
+```{r}
+
+```
