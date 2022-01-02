@@ -34,10 +34,10 @@ write.csv(data,"heart3.csv", row.names = FALSE)
 ```{r}
 library(dplyr)
 #all character columns to factor:
-heart2df <- mutate_if(df, is.character, as.factor)
+heart2df <- mutate_if(data, is.character, as.factor)
 
 # select character columns 'char1', 'char2', etc. to factor:
-#heart2df <- mutate_at(heart2, vars(HeartDisease), as.factor)
+heart2df <- mutate_at(heart2df, vars(HeartDisease), as.factor)
 ```
 
 
