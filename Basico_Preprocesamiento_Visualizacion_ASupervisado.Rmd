@@ -2,12 +2,12 @@
 title: "Preprocesamiento_Visualizacion_ASupervisado"
 author: "Emilia Coleto y Manuel García"
 date: "28/12/2021"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
+```{r}
 #Instalación y uso de tidyverse. Se usará el paquete dplyr para el preprocesamiento y ggplot2 para la visualización
 install.packages("tidyverse")
 library(tidyverse)
@@ -22,12 +22,6 @@ dim(heart)
 names(heart$Age)
 
 ```
-
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r Preprocesamiento 1: Valores perdidos y Filas duplicadas}
 #Buscamos si hay algún valor que sea un espacio en blanco, NaN o haya alguna observación duplicada.
@@ -158,14 +152,257 @@ summary(heart3) #Resumen del dataframe "heart3"
 
 ```
 
+Preparamos la visualización de los datos del dataset. La visualización se realiza con la librería "ggplot2" y se divide el dataset en pacientes con ataque al corazón y pacientes sin ataque al corazón.
+```{r}
+install.packages('ggplot2')
+library(ggplot2)
 
+heartDisease <- subset(heart3, HeartDisease == 1) 
+heartDisease #Pacientes con ataque al corazón
+notHeartDisease <- subset(heart3, HeartDisease == 0)
+notHeartDisease #Pacientes sin ataque al corazón
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
 ```
+## Diagramas de dispersión
+Se pretende comprobar si las propiedades de cada elemento del dataset están relacionadas entre sí en pacientes con ataque al corazón. Por ello, se utiliza un diagrama de dispersión.
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+ggplot(heartDisease, aes(x=Age, y=Cholesterol)) +
+  geom_point()
+# No estan fuertemente relacionadas la edad con el colesterol para tener un ataque al corazón
+```
+Como podemos observar en el gráfico, las variables edad y colesterol no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$Age, heartDisease$Cholesterol)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas no están relacionadas.
+
+```{r}
+ggplot(heartDisease, aes(x=Age, y=RestingBP)) +
+  geom_point()
+#No estan relacionadas la edad con la presión sanguínea para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables edad y la presión sanguínea no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$Age, heartDisease$RestingBP)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas tienen una correlación baja.
+
+```{r}
+ggplot(heartDisease, aes(x=Age, y=MaxHR)) +
+  geom_point()
+#No estan relacionadas la edad con la presión sanguínea para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables edad y ritmo cardíaco no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$Age, heartDisease$MaxHR)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas están muy poco relacionadas.
+
+```{r}
+ggplot(heartDisease, aes(x=Age, y=Oldpeak)) +
+  geom_point()
+#No estan relacionadas la edad con la depresión del segmento ST para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables edad y la depresión del segmento ST no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$Age, heartDisease$Oldpeak)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas no están relacionadas.
+
+```{r}
+ggplot(heartDisease, aes(x=Cholesterol, y=RestingBP)) +
+  geom_point()
+#No estan relacionadas el colesterol con la presión sanguínea para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables colesterol y presión sanguínea no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$Cholesterol, heartDisease$RestingBP)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas no están relacionadas.
+
+```{r}
+ggplot(heartDisease, aes(x=Cholesterol, y=MaxHR)) +
+  geom_point()
+#No estan relacionadas la edad con la presión sanguínea para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables colesterol y ritmo cardíaco no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$Cholesterol, heartDisease$MaxHR)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas no están relacionadas.
+
+```{r}
+ggplot(heartDisease, aes(x=Cholesterol, y=Oldpeak)) +
+  geom_point()
+#No estan relacionadas la edad con la depresión del segmento ST para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables colesterol y depresión del segmento ST no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$Cholesterol, heartDisease$Oldpeak)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas no están relacionadas.
+
+```{r}
+ggplot(heartDisease, aes(x=RestingBP, y=MaxHR)) +
+  geom_point()
+#No estan relacionadas la edad con la presión sanguínea para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables presión sanguínea y ritmo cardíaco no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$RestingBP, heartDisease$MaxHR)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas están relacionadas a muy bajo nivel.
+
+```{r}
+ggplot(heartDisease, aes(x=RestingBP, y=Oldpeak)) +
+  geom_point()
+#No estan relacionadas la edad con la depresión del segmento ST para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables presión sanguínea y depresión del segmento ST no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$RestingBP, heartDisease$Oldpeak)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas están relacionadas a muy bajo nivel.
+
+```{r}
+ggplot(heartDisease, aes(x=MaxHR, y=Oldpeak)) +
+  geom_point()
+#No estan relacionadas la edad con la depresión del segmento ST para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables máximo ritmo cardíaco y depresión del segmento ST no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$MaxHR, heartDisease$Oldpeak)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas están relacionadas a muy bajo nivel.
+
+## Diagramas de barras
+Con la visualización de estas gráficas, se pretende analizar cómo se agrupan por categorías entre las dos variables comparadas.
+
+```{r Composición de ataques al corazón según el tipo de dolor de pecho}
+subsetASY0 <- subset(notHeartDisease, ChestPainType == "ASY")
+subsetATA0 <- subset(notHeartDisease, ChestPainType == "ATA")
+subsetNAP0 <- subset(notHeartDisease, ChestPainType == "NAP")
+subsetTA0 <- subset(notHeartDisease, ChestPainType == "TA")
+
+subsetASY1 <- subset(heartDisease, ChestPainType == "ASY")
+subsetATA1 <- subset(heartDisease, ChestPainType == "ATA")
+subsetNAP1 <- subset(heartDisease, ChestPainType == "NAP")
+subsetTA1 <- subset(heartDisease, ChestPainType == "TA")
+
+data <- data.frame(
+  Dolor = c("ASY", "ATA", "NAP", "TA", "ASY", "ATA", "NAP", "TA"),
+  Ataque = c("no","no", "no","no","si","si" ,"si","si"),
+  Individuos = c(nrow(subsetASY0), nrow(subsetATA0), nrow(subsetNAP0), nrow(subsetTA0), nrow(subsetASY1), nrow(subsetATA1), nrow(subsetNAP1), nrow(subsetTA1))
+)
+
+ggplot(data, mapping=(aes(x=Ataque, y=Individuos, fill=Dolor))) +
+  ggtitle("Composición de ataques al corazón según el tipo de dolor de pecho") +
+  geom_bar(stat="identity", position = 'dodge') +
+  geom_text(mapping=(aes(label=Individuos)), position = position_dodge(0.9))
+```
+Como se observa en la gráfica el tipo de dolor entre pacientes con ataque al corazón y no, varía bastante. Siendo el tipo "ASY" el predominante en pacientes con ataque al corazón.
+
+```{r Composición de ataques al corazón según el sexo}
+subsetF0 <- subset(notHeartDisease, Sex == "F")
+subsetM0 <- subset(notHeartDisease, Sex == "M")
+
+subsetF1 <- subset(heartDisease, Sex == "F")
+subsetM1 <- subset(heartDisease, Sex == "M")
+
+data <- data.frame(
+  Sexo = c("F","M","F","M"),
+  Ataque = c("no","no","si","si"),
+  Individuos = c(nrow(subsetF0),nrow(subsetM0),nrow(subsetF1),nrow(subsetM1))
+)
+
+ggplot(data, mapping=(aes(x=Ataque, y=Individuos, fill=Sexo))) +
+  ggtitle("Composición de ataques al corazón según el sexo") +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  geom_text(mapping=(aes(label=Individuos)), position = position_dodge(0.9))
+```
+Como se observa en la gráfica el se han obtenido más datos de hombres que de mujeres. Siendo mucho más usual el ataque al corazón en hombres que en mujeres.
+
+```{r Composición de ataques al corazón según la glucemia en ayunas}
+subset00 <- subset(notHeartDisease, FastingBS == "0")
+subset10 <- subset(notHeartDisease, FastingBS == "1")
+
+subset01 <- subset(heartDisease, FastingBS == "0")
+subset11 <- subset(heartDisease, FastingBS == "1")
+
+data <- data.frame(
+  Glucemia = c("no", "si","no", "si"),
+  Ataque = c("no","no","si","si"),
+  Individuos = c(nrow(subset00), nrow(subset10), nrow(subset01), nrow(subset11))
+)
+
+ggplot(data, mapping=(aes(x=Ataque, y=Individuos, fill=Glucemia))) +
+  ggtitle("Composición de ataques al corazón según la glucemia en ayunas") +
+  geom_bar(stat="identity", position = 'dodge') +
+  geom_text(mapping=(aes(label=Individuos)), position = position_dodge(0.9))
+```
+Como podemos observar, se tienen más datos de pacientes sin hiperglucemia que con ella. Y como se aprecia en los individuos con ataque al corazón, tener hiperglucemia no indica que haya más posibilidades de infarto.
+
+```{r Composición de ataques al corazón según resultados electrocardiográficos en reposo}
+subsetLVH0 <- subset(notHeartDisease, RestingECG == "LVH")
+subsetNormal0 <- subset(notHeartDisease, RestingECG == "Normal")
+subsetST0 <- subset(notHeartDisease, RestingECG == "ST")
+
+subsetLVH1 <- subset(heartDisease, RestingECG == "LVH")
+subsetNormal1 <- subset(heartDisease, RestingECG == "Normal")
+subsetST1 <- subset(heartDisease, RestingECG == "ST")
+
+data <- data.frame(
+  Resultados = c("LVH", "Normal", "ST", "LVH", "Normal", "ST"),
+  Ataque = c("no","no", "no","si","si","si"),
+  Individuos = c(nrow(subsetLVH0), nrow(subsetNormal0), nrow(subsetST0), nrow(subsetLVH1), nrow(subsetNormal1), nrow(subsetST1))
+)
+
+ggplot(data, mapping=(aes(x=Ataque, y=Individuos, fill=Resultados))) +
+  ggtitle("Composición de ataques al corazón según resultados \n electrocardiográficos en reposo") +
+  geom_bar(stat="identity", position = 'dodge') +
+  geom_text(mapping=(aes(label=Individuos)), position = position_dodge(0.9))
+```
+Como se observa en la gráfica, ningún tipo de resultado en el electrocardiograma puede predecir si el paciente va a sufrir un ataque al corazón o no.
+
+```{r Composición de ataques al corazón según angina inducida por el ejercicio}
+subsetN0 <- subset(notHeartDisease, ExerciseAngina == "N")
+subsetY0 <- subset(notHeartDisease, ExerciseAngina == "Y")
+
+subsetN1 <- subset(heartDisease, ExerciseAngina == "N")
+subsetY1 <- subset(heartDisease, ExerciseAngina == "Y")
+
+data <- data.frame(
+  Angina = c("no", "sí", "no", "sí"),
+  Ataque = c("no","no","si","si"),
+  Individuos = c(nrow(subsetN0), nrow(subsetY0), nrow(subsetN1), nrow(subsetY1))
+)
+
+ggplot(data, mapping=(aes(x=Ataque, y=Individuos, fill=Angina))) +
+  ggtitle("Composición de ataques al corazón según angina inducida por el ejercicio") +
+  geom_bar(stat="identity", position = 'dodge') +
+  geom_text(mapping=(aes(label=Individuos)), position = position_dodge(0.9))
+```
+En la gráfica podemos ver la disparidad entre la relación de tener ataque al corazón con tener angina. Se puede afirmar, que las personas con angina son más propensas al ataque al corazón que las que no.
+
+```{r Composición de ataques al corazón según la pendiente del segmento ST del ejercicio maximo}
+subsetD0 <- subset(notHeartDisease, ST_Slope == "Down")
+subsetF0 <- subset(notHeartDisease, ST_Slope == "Flat")
+subsetU0 <- subset(notHeartDisease, ST_Slope == "Up")
+
+subsetD1 <- subset(heartDisease, ST_Slope == "Down")
+subsetF1 <- subset(heartDisease, ST_Slope == "Flat")
+subsetU1 <- subset(heartDisease, ST_Slope == "Up")
+
+data <- data.frame(
+  Pendiente = c("Down", "Flat", "Up", "Down", "Flat", "Up"),
+  Ataque = c("no","no","no","si","si","si"),
+  Individuos = c(nrow(subsetD0), nrow(subsetF0), nrow(subsetU0), nrow(subsetD1), nrow(subsetF1), nrow(subsetU1))
+)
+
+ggplot(data, mapping=(aes(x=Ataque, y=Individuos, fill=Pendiente))) +
+  ggtitle("Composición de ataques al corazón según la pendiente del \n segmento ST del ejercicio maximo") +
+  geom_bar(stat="identity", position = 'dodge') +
+  geom_text(mapping=(aes(label=Individuos)), position = position_dodge(0.9))
+```
+Podemos afirmar que las personas sin pendiente en el segmento ST, padecen más ataques al corazón que las de pendiente ascendente o descendente.
