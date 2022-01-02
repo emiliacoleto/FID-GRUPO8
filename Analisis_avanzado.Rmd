@@ -12,8 +12,8 @@ output: html_document
 data <- read.csv('heart.csv')
 
 # Creamos los datos de forma aleatoria
-weigth <- sample(c(6000:15000), 918, replace = TRUE)/100
-heigth <- sample(c(140:200), 918, replace = TRUE)/100
+weigth <- sample(c(5500:19500), 918, replace = TRUE)/100
+heigth <- sample(c(145:200), 918, replace = TRUE)/100
 countries <- c('Spain', 'France', 'Germany', 'England', 'Portugal', 'Cuba', 'China', 'South Africa', 'Italy')
 country <- sample(countries, 918, replace = TRUE)
 
@@ -27,12 +27,107 @@ data <- tibble::rowid_to_column(data, "ID")
 View(data)
 
 # Exportamos los nuevos datos a un CSV
-write.csv(data,"heart3.csv", row.names = FALSE)
+# write.csv(data,"heart_advanced_with_garbage_new.csv", row.names = FALSE)
 ```
 
 ## Preprocesamiento y visualización de datos
 
 ```{r}
+heart <- read.table("heart_advanced_with_garbage.csv", na.strings="", header=TRUE, sep=",", dec=".")
+attach(heart)
+table(Cholesterol)
+table(Age)
+table(Sex)
+table(ChestPainType)
+table(RestingBP)
+table(FastingBS)
+table(RestingECG)
+table(MaxHR)
+table(ExerciseAngina)
+table(Oldpeak)
+table(ST_Slope)
+table(HeartDisease)
+table(Weigth)
+table(Heigth)
+table(Country)
+
+# Preprocesamiento Age
+Age -> heart$Age
+boxplot(heart$Age, horizontal = TRUE)
+
+# Preprocesamiento RestingBP
+RestingBP <- heart$RestingBP
+boxplot(RestingBP, horizontal = TRUE)
+boxplot.stats(RestingBP)
+heart_Sin_Out_RestingBP <- RestingBP[RestingBP>92 & RestingBP<170] 
+boxplot(heart_Sin_Out_RestingBP, horizontal = TRUE) 
+boxplot.stats(heart_Sin_Out_RestingBP)
+heart1 <- filter(heart, RestingBP > 92 & RestingBP<170) 
+str(heart1)
+head(heart1)
+
+# Preprocesamiento Cholesterol
+Cholesterol <- heart1$Cholesterol
+boxplot(Cholesterol, horizontal=TRUE)
+boxplot.stats(Cholesterol)
+heart1_Sin_Out_Cholesterol <- Cholesterol[Cholesterol >0 & Cholesterol < 404]
+boxplot(heart1_Sin_Out_Cholesterol, horizontal=TRUE)
+heart2_Sin_out_Cholesterol2 <- heart1_Sin_Out_Cholesterol[heart1_Sin_Out_Cholesterol > 110 & heart1_Sin_Out_Cholesterol< 369]
+boxplot(heart2_Sin_out_Cholesterol2, horizontal=TRUE)
+heart2 <- filter(heart1, Cholesterol > 110 & Cholesterol < 369)
+str(heart2)
+head(heart2)
+
+# Preprocesamiento MaxHR
+MaxHR <- heart2$MaxHR
+boxplot(MaxHR, horizontal=TRUE)
+boxplot.stats(MaxHR)
+str(heart2)
+
+# Preprocesamiento OldPeak
+OldPeak <- heart2$Oldpeak
+boxplot(OldPeak, horizontal=TRUE)
+boxplot.stats(OldPeak)
+heart2_Sin_out_OldPeak <- OldPeak[OldPeak < 3.6]
+boxplot(heart2_Sin_out_OldPeak, horizontal=TRUE)
+boxplot.stats(heart2_Sin_out_OldPeak)
+heart3<- filter(heart2, OldPeak < 3.6)
+
+# Preprocesamiento Weigth
+Weigth <- heart3$Weigth
+boxplot(Weigth, horizontal=TRUE)
+boxplot.stats(Weigth)
+heart3_Sin_out_Weigth <- Weigth[Weigth > 60 & Weigth < 190]
+boxplot(heart3_Sin_out_Weigth, horizontal=TRUE)
+boxplot.stats(heart3_Sin_out_Weigth)
+heart4<- filter(heart3, Weigth > 60 & Weigth < 190)
+
+# Preprocesamiento Heigth
+Heigth <- heart4$Heigth
+boxplot(Heigth, horizontal=TRUE)
+boxplot.stats(Heigth)
+heart4_Sin_out_Heigth <- Heigth[Heigth > 1.5 & Heigth < 2.0]
+boxplot(heart4_Sin_out_Heigth, horizontal=TRUE)
+boxplot.stats(heart4_Sin_out_Heigth)
+heart5<- filter(heart4, Heigth > 1.5 & Heigth < 2.0)
+
+# Dataset FINAL  sin outliers
+str(heart5) 
+View(heart5)
+
+# Comprobación de outliers
+boxplot(heart5$RestingBP, horizontal = TRUE)
+boxplot(heart5$Cholesterol, horizontal = TRUE)
+boxplot(heart5$MaxHR, horizontal = TRUE)
+boxplot(heart5$Oldpeak, horizontal = TRUE)
+boxplot(heart5$Weigth, horizontal = TRUE)
+boxplot(heart5$Heigth, horizontal = TRUE)
+
+# Resumen
+summary(heart5) 
+
+# Dataset procesado
+write.csv(heart5,"heart_processed.csv", row.names = FALSE)
 
 ```
 
@@ -65,10 +160,69 @@ plot(hc1, cex = 0.6, hang = -1)
 plot(hc1, cex = 0.6, hang = -1)
 rect.hclust(hc1, k = 7, border = 2:5)
 ```
+
 ```{r}
 clust <- cutree(hc1, k = 3)
 
 library(factoextra)
 
 fviz_cluster(list(data = data, cluster = clust)) 
+```
+
+
+## Reglas de asociación
+
+# Referencias
+# https://www.cienciadedatos.net/documentos/43_reglas_de_asociacion#Arules_package
+# https://rdrr.io/cran/arules/man/discretize.html
+
+```{r}
+# Cargamos los datos
+library(tidyverse)
+datos <- read_csv(file = "./heart_advanced_processed.csv", col_names = TRUE)
+
+# Añadimos una columna para el identificador de cada fila
+datos <- tibble::rowid_to_column(datos, "ID")
+
+# Discretizamos las columnas de valores continuos
+datos$Age<-cut(datos$Age, c(0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80),include.lowest = TRUE, right = FALSE)
+datos$RestingBP<-cut(datos$RestingBP, c(90,100,110,120,130,140,150,160,170,180,
+                                        190,200), include.lowest = TRUE, right = FALSE)
+datos$Cholesterol<-cut(datos$Cholesterol, c(90,100,110,120,130,140,150,160,170,
+                                             180,190,200,210,220,230,240,250,260,
+                                             270,280,290,300,310,320,330,340,350,
+                                             360,370,380,390), include.lowest = TRUE, right = FALSE)
+datos$MaxHR<-cut(datos$MaxHR, c(70,75,80,85,90,95,100,105,110,115,120,125,130,
+                                 135,140,145,150,155,160,165,170,175,180,185,
+                                 190,195,200), include.lowest = TRUE, right = FALSE)
+datos$Oldpeak<-cut(datos$Oldpeak, c(0.,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0), 
+                    include.lowest = TRUE, right = FALSE)
+datos$Weigth<-cut(datos$Weigth, c(55.0,60.0,65.0,70.0,75.0,80.0,85.0,90.0,95.0,
+                                   100.0,105.0,110.0,115.0,120.0,125.0,130.0,
+                                   135.0,140.0,145.0,150.0,155.0,160.0,165.0,
+                                   170.0,175.0,180.0,185.0,190.0,195.0), 
+                    include.lowest = TRUE, right = FALSE)
+datos$Heigth<-cut(datos$Heigth, c(1.45,1.50,1.55,1.60,1.65,1.70,1.75,1.80,1.85,
+                                  1.90,1.95,2.00), 
+                    include.lowest = TRUE, right = FALSE)
+
+# Mostramos el dataset discretizado
+View(datos)
+
+# Generamos el nuevo CSV discretizado
+write.csv(datos,"heart_discretized.csv", row.names = FALSE)
+
+# Librería arules
+library(arules)
+
+# Objeto de tipo transaction
+transacciones <- read.transactions(file = "./heart_advanced_discretized.csv",
+                                   format = "basket",
+                                   sep = ",",
+                                   header = TRUE,
+                                   cols = 1,
+                                   rm.duplicates = TRUE)
+
+# Mostramos las 5 primeras transacciones
+inspect(transacciones[1:5])
 ```

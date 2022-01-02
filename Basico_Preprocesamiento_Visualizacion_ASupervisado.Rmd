@@ -1,0 +1,171 @@
+---
+title: "Preprocesamiento_Visualizacion_ASupervisado"
+author: "Emilia Coleto y Manuel García"
+date: "28/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Instalación y uso de tidyverse. Se usará el paquete dplyr para el preprocesamiento y ggplot2 para la visualización
+install.packages("tidyverse")
+library(tidyverse)
+
+#Visualización del dataframe original heart.csv
+heart <- read.csv('heart.csv')
+View(heart)
+
+colnames(heart)
+dim(heart)
+
+names(heart$Age)
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r Preprocesamiento 1: Valores perdidos y Filas duplicadas}
+#Buscamos si hay algún valor que sea un espacio en blanco, NaN o haya alguna observación duplicada.
+
+heart <- read.table("heart.csv", na.strings="", header=TRUE, sep=",", dec=".")
+#Se va a interpretar todos aquellos huecos en blanco como NA (Not Available).
+str(heart)
+
+#POdemos comprobar de dos formas que no contiene NA. 
+#1º Haciendo tablas de frecuencia para ver que valores toman las observaciones en cada atributo
+
+attach(heart)#attacha "engancha" el contenido del dataframe al entorno donde R busca los nombres de las variables
+
+table(Cholesterol)
+table(Age)
+table(Sex)
+table(ChestPainType)
+table(RestingBP)
+table(FastingBS)
+table(RestingECG)
+table(MaxHR)
+table(ExerciseAngina)
+table(Oldpeak)
+table(ST_Slope)
+table(HeartDisease)
+
+#2º Detectando con la funcion complete.cases si hay algun NA (Devolveria false en aquella observación que tuviera un NA). Todos son TRUE
+complete.cases(heart)
+
+
+#Por otro lado queremos saber si hay observaciones 
+duplicated(heart)#Todas las observaciones son únicas, ya que devuelven FALSE. Si hubiera al menos dos duplicadas, aparecerían como TRUE
+
+
+#Concluimos que no hay ni espacios en blanco ni NA en nuestro Dataframe inicial.
+
+```
+
+```{r Preprocesamiento 2: Detección y eliminación de outliers}
+#Para ello, haremos uso del comando boxplot (Diagrama de cajas y bigotes para encontrar los outliers y el filtrado del paquete dplyr para eliminarlos del dataset y quedarnos con uno más limpio.
+#Nos fijaremos en los atributos con valores continuos.
+ 
+str(heart) #Contenido de heart.csv
+head(heart)
+
+#Buscaremos outliers en los atributos Age, RestingBP, Cholesterol, MaxHR y OldPeak
+
+boxplot(heart$Age, horizontal = TRUE)
+#Detectamos que con la variable edad no se produce ningún outlier, por lo que continuaremos con el resto de atributos, donde si encontraremos algunos.
+
+```
+
+
+```{r Preprocesamiento 2: Detección y eliminación de outliers: Atributo RestingBP}
+RestingBP <- heart$RestingBP
+
+boxplot(RestingBP, horizontal = TRUE) #Vemos que hay outliers
+boxplot.stats(RestingBP)#Hay outliers por debajo de 92 y por encima de 170
+heart_Sin_Out_RestingBP <- RestingBP[RestingBP>92 & RestingBP<170] #Nos quedamos con el subconjunto dejando fuera a los outliers
+boxplot(heart_Sin_Out_RestingBP, horizontal = TRUE) #comprobamos que no hay outliers
+boxplot.stats(heart_Sin_Out_RestingBP)
+
+#FIltrado del dataframe mediante paquete dplyr para eliminar outliers de RestingBP
+heart1 <- filter(heart, RestingBP > 92 & RestingBP<170) #Filtramos nuestro dataframe "heart" para obtener uno nuevo sin los outliers.
+
+str(heart1)#Nuevo dataframe "heart1" con 875 observaciones
+head(heart1)
+
+#Repetiriamos el proceso para los restantes atributos
+
+```
+
+```{r Preprocesamiento 2: Detección y eliminación de outliers: Atributo Cholesterol}
+
+Cholesterol <- heart1$Cholesterol
+
+boxplot(Cholesterol, horizontal=TRUE)
+boxplot.stats(Cholesterol)
+heart1_Sin_Out_Cholesterol <- Cholesterol[Cholesterol >0 & Cholesterol < 404]
+boxplot(heart1_Sin_Out_Cholesterol, horizontal=TRUE)
+boxplot.stats(heart1_Sin_Out_Cholesterol) #En este caso en partircular, vemos que al hacer las modificaciones por haber tanto outliers, vuelve a haber outliers quedandonos con un subconjunto. Volveremos a repetir este paso hasta que nos quedemos sin outliers.
+
+heart2_Sin_out_Cholesterol2 <- heart1_Sin_Out_Cholesterol[heart1_Sin_Out_Cholesterol > 110 & heart1_Sin_Out_Cholesterol< 369]
+boxplot(heart2_Sin_out_Cholesterol2, horizontal=TRUE)
+
+#FIltrado del dataframe mediante paquete dplyr para eliminar outliers de CHholesterol
+heart2 <- filter(heart1, Cholesterol > 110 & Cholesterol < 369)
+
+str(heart2)#Nuevo dataframe "heart2" con 690 observaciones
+head(heart2)
+
+
+```
+
+```{r Preprocesamiento 2: Detección y eliminación de outliers: Atributo MaxHR}
+
+MaxHR <- heart2$MaxHR
+boxplot(MaxHR, horizontal=TRUE)
+boxplot.stats(MaxHR)#No es necesario el filtrado puesto que el actual dataframe(heart2) no contiene outliers para ese atributo
+
+str(heart2)
+
+```
+
+```{r Preprocesamiento 2: Detección y eliminación de outliers: Atributo OldPeak. FIN de Preprocesamiento 1}
+
+OldPeak <- heart2$Oldpeak
+boxplot(OldPeak, horizontal=TRUE)
+boxplot.stats(OldPeak)
+heart2_Sin_out_OldPeak <- OldPeak[OldPeak < 3.6]
+boxplot(heart2_Sin_out_OldPeak, horizontal=TRUE)
+boxplot.stats(heart2_Sin_out_OldPeak)
+
+#Filtrado del dataframe mediante paquete dplyr para eliminar outliers de Oldpeak
+heart3<- filter(heart2, OldPeak < 3.6)
+
+##Dataset FINAL  sin outliers
+str(heart3) #Dataframe final con 674 observaciones
+View(heart3)
+
+#Se puede comprobar que no hay  outliers en el dataframe "heart3" con los siguientes comandos boxplot
+boxplot(heart3$RestingBP, horizontal = TRUE)
+boxplot(heart3$Cholesterol, horizontal = TRUE)
+boxplot(heart3$MaxHR, horizontal = TRUE)
+boxplot(heart3$Oldpeak, horizontal = TRUE)
+
+summary(heart3) #Resumen del dataframe "heart3"
+
+```
+
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
