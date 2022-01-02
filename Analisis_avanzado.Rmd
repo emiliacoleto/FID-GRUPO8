@@ -135,16 +135,20 @@ datos <- read_csv(file = "./heart_processed.csv", col_names = TRUE)
 datos <- tibble::rowid_to_column(datos, "ID")
 
 # Discretizamos las columnas de valores continuos
-datos$Age<-cut(datos$Age, c(0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80))
+datos$Age<-cut(datos$Age, c(0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80),include.lowest = TRUE, right = FALSE)
 datos$RestingBP<-cut(datos$RestingBP, c(90,100,110,120,130,140,150,160,170,180,
-                                        190,200))
+                                        190,200), include.lowest = TRUE, right = FALSE)
 datos$Cholesterol<-cut(datos$Cholesterol, c(90,100,110,120,130,140,150,160,170,
                                              180,190,200,210,220,230,240,250,260,
                                              270,280,290,300,310,320,330,340,350,
-                                             360,370,380,390))
+                                             360,370,380,390), include.lowest = TRUE, right = FALSE)
 datos$MaxHR<-cut(datos$MaxHR, c(70,75,80,85,90,95,100,105,110,115,120,125,130,
                                  135,140,145,150,155,160,165,170,175,180,185,
-                                 190,195,200))
+                                 190,195,200), include.lowest = TRUE, right = FALSE)
+datos$Oldpeak<-cut(datos$Oldpeak, c(0.,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0), 
+                    include.lowest = TRUE, right = FALSE)
+datos$Weigth<-cut(datos$Weigth, c(60.0,65.0,70.0,75.0,80.0,85.0,90.0,95.0,100.0,105.0,110.0,115.0,120.0,125.0,130.0,135.0,140.0,145.0,150.0), 
+                    include.lowest = TRUE, right = FALSE)
 
 # Mostramos el dataset discretizado
 View(datos)
