@@ -40,3 +40,48 @@ write.csv(data,"heart3.csv", row.names = FALSE)
 ```{r}
 
 ```
+
+## Reglas de asociación
+
+# Referencias
+# https://www.cienciadedatos.net/documentos/43_reglas_de_asociacion#Arules_package
+# https://rdrr.io/cran/arules/man/discretize.html
+
+```{r}
+# Cargamos los datos
+library(tidyverse)
+datos <- read_csv(file = "./heart2.csv", col_names = TRUE)
+
+# Añadimos una columna para el identificador de cada fila
+datos <- tibble::rowid_to_column(datos, "ID")
+
+# Discretizamos las columnas de valores continuos
+datos$Age<-cut(datos$Age, c(0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80))
+datos$RestingBP<-cut(datos$RestingBP, c(90,100,110,120,130,140,150,160,170,180,190,200))
+datos$Cholesterol2<-cut(datos$Cholesterol, c(90,100,110,120,130,140,150,160,170,180,190,200,210,220,230,240,250,260,270,280,290,300))
+
+# Mostramos el dataset discretizado
+View(datos)
+
+# Generamos el nuevo CSV discretizado
+write.csv(datos,"heart_discretized.csv", row.names = FALSE)
+
+# Librería arules
+library(arules)
+
+# Objeto de tipo transaction
+transacciones <- read.transactions(file = "./heart_discretized.csv",
+                                   format = "basket",
+                                   sep = ",",
+                                   header = TRUE,
+                                   cols = 1,
+                                   rm.duplicates = TRUE)
+
+# Mostramos las 5 primeras transacciones
+inspect(transacciones[1:5])
+```
+
+
+
+
+
