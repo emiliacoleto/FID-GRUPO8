@@ -1,0 +1,506 @@
+---
+title: "Preprocesamiento_Visualizacion_ASupervisado"
+author: "GRUPO 8. Emilia Coleto y Manuel García"
+date: "28/12/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r}
+#Instalación y uso de tidyverse. Se usará el paquete dplyr para el preprocesamiento y ggplot2 para la visualización
+install.packages("tidyverse")
+library(tidyverse)
+
+#Visualización del dataframe original heart.csv
+heart <- read.csv('heart.csv')
+View(heart)
+
+colnames(heart)
+dim(heart)
+
+
+```
+
+```{r Preprocesamiento 1: Valores perdidos y Filas duplicadas}
+#Buscamos si hay algún valor que sea un espacio en blanco, NaN o haya alguna observación duplicada.
+
+heart <- read.table("heart.csv", na.strings="", header=TRUE, sep=",", dec=".")
+#Se va a interpretar todos aquellos huecos en blanco como NA (Not Available).
+str(heart)
+
+#POdemos comprobar de dos formas que no contiene NA. 
+#1º Haciendo tablas de frecuencia para ver que valores toman las observaciones en cada atributo
+
+attach(heart)#attacha "engancha" el contenido del dataframe al entorno donde R busca los nombres de las variables
+
+table(Cholesterol)
+table(Age)
+table(Sex)
+table(ChestPainType)
+table(RestingBP)
+table(FastingBS)
+table(RestingECG)
+table(MaxHR)
+table(ExerciseAngina)
+table(Oldpeak)
+table(ST_Slope)
+table(HeartDisease)
+
+#2º Detectando con la funcion complete.cases si hay algun NA (Devolveria false en aquella observación que tuviera un NA). Todos son TRUE
+complete.cases(heart)
+
+
+#Por otro lado queremos saber si hay observaciones 
+duplicated(heart)#Todas las observaciones son únicas, ya que devuelven FALSE. Si hubiera al menos dos duplicadas, aparecerían como TRUE
+
+
+#Concluimos que no hay ni espacios en blanco ni NA en nuestro Dataframe inicial.
+
+```
+
+```{r Preprocesamiento 2: Detección y eliminación de outliers}
+#Para ello, haremos uso del comando boxplot (Diagrama de cajas y bigotes para encontrar los outliers y el filtrado del paquete dplyr para eliminarlos del dataset y quedarnos con uno más limpio.
+#Nos fijaremos en los atributos con valores continuos.
+ 
+str(heart) #Contenido de heart.csv
+head(heart)
+
+#Buscaremos outliers en los atributos Age, RestingBP, Cholesterol, MaxHR y OldPeak
+
+boxplot(heart$Age, horizontal = TRUE)
+#Detectamos que con la variable edad no se produce ningún outlier, por lo que continuaremos con el resto de atributos, donde si encontraremos algunos.
+
+```
+
+
+```{r Preprocesamiento 2: Detección y eliminación de outliers: Atributo RestingBP}
+RestingBP <- heart$RestingBP
+
+boxplot(RestingBP, horizontal = TRUE) #Vemos que hay outliers
+boxplot.stats(RestingBP)#Hay outliers por debajo de 92 y por encima de 170
+heart_Sin_Out_RestingBP <- RestingBP[RestingBP>92 & RestingBP<170] #Nos quedamos con el subconjunto dejando fuera a los outliers
+boxplot(heart_Sin_Out_RestingBP, horizontal = TRUE) #comprobamos que no hay outliers
+boxplot.stats(heart_Sin_Out_RestingBP)
+
+#FIltrado del dataframe mediante paquete dplyr para eliminar outliers de RestingBP
+heart1 <- filter(heart, RestingBP > 92 & RestingBP<170) #Filtramos nuestro dataframe "heart" para obtener uno nuevo sin los outliers.
+
+str(heart1)#Nuevo dataframe "heart1" con 875 observaciones
+head(heart1)
+
+#Repetiriamos el proceso para los restantes atributos
+
+```
+
+```{r Preprocesamiento 2: Detección y eliminación de outliers: Atributo Cholesterol}
+
+Cholesterol <- heart1$Cholesterol
+
+boxplot(Cholesterol, horizontal=TRUE)
+boxplot.stats(Cholesterol)
+heart1_Sin_Out_Cholesterol <- Cholesterol[Cholesterol >0 & Cholesterol < 404]
+boxplot(heart1_Sin_Out_Cholesterol, horizontal=TRUE)
+boxplot.stats(heart1_Sin_Out_Cholesterol) #En este caso en partircular, vemos que al hacer las modificaciones por haber tanto outliers, vuelve a haber outliers quedandonos con un subconjunto. Volveremos a repetir este paso hasta que nos quedemos sin outliers.
+
+heart2_Sin_out_Cholesterol2 <- heart1_Sin_Out_Cholesterol[heart1_Sin_Out_Cholesterol > 110 & heart1_Sin_Out_Cholesterol< 369]
+boxplot(heart2_Sin_out_Cholesterol2, horizontal=TRUE)
+
+#FIltrado del dataframe mediante paquete dplyr para eliminar outliers de CHholesterol
+heart2 <- filter(heart1, Cholesterol > 110 & Cholesterol < 369)
+
+str(heart2)#Nuevo dataframe "heart2" con 690 observaciones
+head(heart2)
+
+
+```
+
+```{r Preprocesamiento 2: Detección y eliminación de outliers: Atributo MaxHR}
+
+MaxHR <- heart2$MaxHR
+boxplot(MaxHR, horizontal=TRUE)
+boxplot.stats(MaxHR)#No es necesario el filtrado puesto que el actual dataframe(heart2) no contiene outliers para ese atributo
+
+str(heart2)
+
+```
+
+```{r Preprocesamiento 2: Detección y eliminación de outliers: Atributo OldPeak. FIN de Preprocesamiento 1}
+
+OldPeak <- heart2$Oldpeak
+boxplot(OldPeak, horizontal=TRUE)
+boxplot.stats(OldPeak)
+heart2_Sin_out_OldPeak <- OldPeak[OldPeak < 3.6]
+boxplot(heart2_Sin_out_OldPeak, horizontal=TRUE)
+boxplot.stats(heart2_Sin_out_OldPeak)
+
+#Filtrado del dataframe mediante paquete dplyr para eliminar outliers de Oldpeak
+heart3<- filter(heart2, OldPeak < 3.6)
+
+##Dataset FINAL  sin outliers
+str(heart3) #Dataframe final con 674 observaciones
+View(heart3)
+
+#Se puede comprobar que no hay  outliers en el dataframe "heart3" con los siguientes comandos boxplot
+boxplot(heart3$RestingBP, horizontal = TRUE)
+boxplot(heart3$Cholesterol, horizontal = TRUE)
+boxplot(heart3$MaxHR, horizontal = TRUE)
+boxplot(heart3$Oldpeak, horizontal = TRUE)
+
+summary(heart3) #Resumen del dataframe "heart3"
+
+##Pasar dataset a csv
+#write.csv(heart3,"heart3_ApSuperv.csv")
+
+
+```
+
+```{r Pasar dataset preprocesado a .csv para el análisis supervisado}
+
+#write.csv(heart3,"heart3_ApSuperv.csv")
+
+```
+
+Preparamos la visualización de los datos del dataset. La visualización se realiza con la librería "ggplot2" y se divide el dataset en pacientes con ataque al corazón y pacientes sin ataque al corazón.
+```{r}
+install.packages('ggplot2')
+library(ggplot2)
+
+heartDisease <- subset(heart3, HeartDisease == 1) 
+heartDisease #Pacientes con ataque al corazón
+notHeartDisease <- subset(heart3, HeartDisease == 0)
+notHeartDisease #Pacientes sin ataque al corazón
+
+```
+## Diagramas de dispersión
+Se pretende comprobar si las propiedades de cada elemento del dataset están relacionadas entre sí en pacientes con ataque al corazón. Por ello, se utiliza un diagrama de dispersión.
+
+```{r}
+ggplot(heartDisease, aes(x=Age, y=Cholesterol)) +
+  geom_point()
+# No estan fuertemente relacionadas la edad con el colesterol para tener un ataque al corazón
+```
+Como podemos observar en el gráfico, las variables edad y colesterol no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$Age, heartDisease$Cholesterol)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas no están relacionadas.
+
+```{r}
+ggplot(heartDisease, aes(x=Age, y=RestingBP)) +
+  geom_point()
+#No estan relacionadas la edad con la presión sanguínea para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables edad y la presión sanguínea no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$Age, heartDisease$RestingBP)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas tienen una correlación baja.
+
+```{r}
+ggplot(heartDisease, aes(x=Age, y=MaxHR)) +
+  geom_point()
+#No estan relacionadas la edad con la presión sanguínea para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables edad y ritmo cardíaco no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$Age, heartDisease$MaxHR)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas están muy poco relacionadas.
+
+```{r}
+ggplot(heartDisease, aes(x=Age, y=Oldpeak)) +
+  geom_point()
+#No estan relacionadas la edad con la depresión del segmento ST para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables edad y la depresión del segmento ST no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$Age, heartDisease$Oldpeak)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas no están relacionadas.
+
+```{r}
+ggplot(heartDisease, aes(x=Cholesterol, y=RestingBP)) +
+  geom_point()
+#No estan relacionadas el colesterol con la presión sanguínea para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables colesterol y presión sanguínea no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$Cholesterol, heartDisease$RestingBP)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas no están relacionadas.
+
+```{r}
+ggplot(heartDisease, aes(x=Cholesterol, y=MaxHR)) +
+  geom_point()
+#No estan relacionadas la edad con la presión sanguínea para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables colesterol y ritmo cardíaco no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$Cholesterol, heartDisease$MaxHR)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas no están relacionadas.
+
+```{r}
+ggplot(heartDisease, aes(x=Cholesterol, y=Oldpeak)) +
+  geom_point()
+#No estan relacionadas la edad con la depresión del segmento ST para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables colesterol y depresión del segmento ST no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$Cholesterol, heartDisease$Oldpeak)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas no están relacionadas.
+
+```{r}
+ggplot(heartDisease, aes(x=RestingBP, y=MaxHR)) +
+  geom_point()
+#No estan relacionadas la edad con la presión sanguínea para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables presión sanguínea y ritmo cardíaco no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$RestingBP, heartDisease$MaxHR)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas están relacionadas a muy bajo nivel.
+
+```{r}
+ggplot(heartDisease, aes(x=RestingBP, y=Oldpeak)) +
+  geom_point()
+#No estan relacionadas la edad con la depresión del segmento ST para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables presión sanguínea y depresión del segmento ST no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$RestingBP, heartDisease$Oldpeak)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas están relacionadas a muy bajo nivel.
+
+```{r}
+ggplot(heartDisease, aes(x=MaxHR, y=Oldpeak)) +
+  geom_point()
+#No estan relacionadas la edad con la depresión del segmento ST para tener un ataque al corazon
+```
+Como podemos observar en el gráfico, las variables máximo ritmo cardíaco y depresión del segmento ST no están relacionadas, por tanto no se puede sacar ninguna conclusión entre ellas para predecir ataques al corazón.
+```{r}
+cor(heartDisease$MaxHR, heartDisease$Oldpeak)
+```
+Obteniendo el valor de la correlación entre estas variables, podemos afirmar que estas están relacionadas a muy bajo nivel.
+
+## Diagramas de barras
+Con la visualización de estas gráficas, se pretende analizar cómo se agrupan por categorías entre las dos variables comparadas.
+
+```{r Composición de ataques al corazón según el tipo de dolor de pecho}
+subsetASY0 <- subset(notHeartDisease, ChestPainType == "ASY")
+subsetATA0 <- subset(notHeartDisease, ChestPainType == "ATA")
+subsetNAP0 <- subset(notHeartDisease, ChestPainType == "NAP")
+subsetTA0 <- subset(notHeartDisease, ChestPainType == "TA")
+
+subsetASY1 <- subset(heartDisease, ChestPainType == "ASY")
+subsetATA1 <- subset(heartDisease, ChestPainType == "ATA")
+subsetNAP1 <- subset(heartDisease, ChestPainType == "NAP")
+subsetTA1 <- subset(heartDisease, ChestPainType == "TA")
+
+data <- data.frame(
+  Dolor = c("ASY", "ATA", "NAP", "TA", "ASY", "ATA", "NAP", "TA"),
+  Ataque = c("no","no", "no","no","si","si" ,"si","si"),
+  Individuos = c(nrow(subsetASY0), nrow(subsetATA0), nrow(subsetNAP0), nrow(subsetTA0), nrow(subsetASY1), nrow(subsetATA1), nrow(subsetNAP1), nrow(subsetTA1))
+)
+
+ggplot(data, mapping=(aes(x=Ataque, y=Individuos, fill=Dolor))) +
+  ggtitle("Composición de ataques al corazón según el tipo de dolor de pecho") +
+  geom_bar(stat="identity", position = 'dodge') +
+  geom_text(mapping=(aes(label=Individuos)), position = position_dodge(0.9))
+```
+Como se observa en la gráfica el tipo de dolor entre pacientes con ataque al corazón y no, varía bastante. Siendo el tipo "ASY" el predominante en pacientes con ataque al corazón.
+
+```{r Composición de ataques al corazón según el sexo}
+subsetF0 <- subset(notHeartDisease, Sex == "F")
+subsetM0 <- subset(notHeartDisease, Sex == "M")
+
+subsetF1 <- subset(heartDisease, Sex == "F")
+subsetM1 <- subset(heartDisease, Sex == "M")
+
+data <- data.frame(
+  Sexo = c("F","M","F","M"),
+  Ataque = c("no","no","si","si"),
+  Individuos = c(nrow(subsetF0),nrow(subsetM0),nrow(subsetF1),nrow(subsetM1))
+)
+
+ggplot(data, mapping=(aes(x=Ataque, y=Individuos, fill=Sexo))) +
+  ggtitle("Composición de ataques al corazón según el sexo") +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  geom_text(mapping=(aes(label=Individuos)), position = position_dodge(0.9))
+```
+Como se observa en la gráfica el se han obtenido más datos de hombres que de mujeres. Siendo mucho más usual el ataque al corazón en hombres que en mujeres.
+
+```{r Composición de ataques al corazón según la glucemia en ayunas}
+subset00 <- subset(notHeartDisease, FastingBS == "0")
+subset10 <- subset(notHeartDisease, FastingBS == "1")
+
+subset01 <- subset(heartDisease, FastingBS == "0")
+subset11 <- subset(heartDisease, FastingBS == "1")
+
+data <- data.frame(
+  Glucemia = c("no", "si","no", "si"),
+  Ataque = c("no","no","si","si"),
+  Individuos = c(nrow(subset00), nrow(subset10), nrow(subset01), nrow(subset11))
+)
+
+ggplot(data, mapping=(aes(x=Ataque, y=Individuos, fill=Glucemia))) +
+  ggtitle("Composición de ataques al corazón según la glucemia en ayunas") +
+  geom_bar(stat="identity", position = 'dodge') +
+  geom_text(mapping=(aes(label=Individuos)), position = position_dodge(0.9))
+```
+Como podemos observar, se tienen más datos de pacientes sin hiperglucemia que con ella. Y como se aprecia en los individuos con ataque al corazón, tener hiperglucemia no indica que haya más posibilidades de infarto.
+
+```{r Composición de ataques al corazón según resultados electrocardiográficos en reposo}
+subsetLVH0 <- subset(notHeartDisease, RestingECG == "LVH")
+subsetNormal0 <- subset(notHeartDisease, RestingECG == "Normal")
+subsetST0 <- subset(notHeartDisease, RestingECG == "ST")
+
+subsetLVH1 <- subset(heartDisease, RestingECG == "LVH")
+subsetNormal1 <- subset(heartDisease, RestingECG == "Normal")
+subsetST1 <- subset(heartDisease, RestingECG == "ST")
+
+data <- data.frame(
+  Resultados = c("LVH", "Normal", "ST", "LVH", "Normal", "ST"),
+  Ataque = c("no","no", "no","si","si","si"),
+  Individuos = c(nrow(subsetLVH0), nrow(subsetNormal0), nrow(subsetST0), nrow(subsetLVH1), nrow(subsetNormal1), nrow(subsetST1))
+)
+
+ggplot(data, mapping=(aes(x=Ataque, y=Individuos, fill=Resultados))) +
+  ggtitle("Composición de ataques al corazón según resultados \n electrocardiográficos en reposo") +
+  geom_bar(stat="identity", position = 'dodge') +
+  geom_text(mapping=(aes(label=Individuos)), position = position_dodge(0.9))
+```
+Como se observa en la gráfica, ningún tipo de resultado en el electrocardiograma puede predecir si el paciente va a sufrir un ataque al corazón o no.
+
+```{r Composición de ataques al corazón según angina inducida por el ejercicio}
+subsetN0 <- subset(notHeartDisease, ExerciseAngina == "N")
+subsetY0 <- subset(notHeartDisease, ExerciseAngina == "Y")
+
+subsetN1 <- subset(heartDisease, ExerciseAngina == "N")
+subsetY1 <- subset(heartDisease, ExerciseAngina == "Y")
+
+data <- data.frame(
+  Angina = c("no", "sí", "no", "sí"),
+  Ataque = c("no","no","si","si"),
+  Individuos = c(nrow(subsetN0), nrow(subsetY0), nrow(subsetN1), nrow(subsetY1))
+)
+
+ggplot(data, mapping=(aes(x=Ataque, y=Individuos, fill=Angina))) +
+  ggtitle("Composición de ataques al corazón según angina inducida por el ejercicio") +
+  geom_bar(stat="identity", position = 'dodge') +
+  geom_text(mapping=(aes(label=Individuos)), position = position_dodge(0.9))
+```
+En la gráfica podemos ver la disparidad entre la relación de tener ataque al corazón con tener angina. Se puede afirmar, que las personas con angina son más propensas al ataque al corazón que las que no.
+
+```{r Composición de ataques al corazón según la pendiente del segmento ST del ejercicio maximo}
+subsetD0 <- subset(notHeartDisease, ST_Slope == "Down")
+subsetF0 <- subset(notHeartDisease, ST_Slope == "Flat")
+subsetU0 <- subset(notHeartDisease, ST_Slope == "Up")
+
+subsetD1 <- subset(heartDisease, ST_Slope == "Down")
+subsetF1 <- subset(heartDisease, ST_Slope == "Flat")
+subsetU1 <- subset(heartDisease, ST_Slope == "Up")
+
+data <- data.frame(
+  Pendiente = c("Down", "Flat", "Up", "Down", "Flat", "Up"),
+  Ataque = c("no","no","no","si","si","si"),
+  Individuos = c(nrow(subsetD0), nrow(subsetF0), nrow(subsetU0), nrow(subsetD1), nrow(subsetF1), nrow(subsetU1))
+)
+
+ggplot(data, mapping=(aes(x=Ataque, y=Individuos, fill=Pendiente))) +
+  ggtitle("Composición de ataques al corazón según la pendiente del \n segmento ST del ejercicio maximo") +
+  geom_bar(stat="identity", position = 'dodge') +
+  geom_text(mapping=(aes(label=Individuos)), position = position_dodge(0.9))
+```
+Podemos afirmar que las personas sin pendiente en el segmento ST, padecen más ataques al corazón que las de pendiente ascendente o descendente.
+
+```{r Análisis a realizar: SUPERVISADO}
+```
+##Paquete Caret 
+
+Contiene todo lo necesario para realizar funciones de facilitación, mejora y optimización respecto a la creación de modelos predictivos. Con este paquete realizaremos diversas técnicas computacionales con las que podremos comparar y extraer el mejor modelo de predicción para nuestro problema.
+Para ello, el primer paso será instalar y cargar el paquete en nuestro entorno de trabajo.
+
+```{r Instalación y carga de paquete Caret}
+install.packages('caret')
+library(caret)
+library(dplyr) #Para manipular dataframes
+
+
+```
+
+Lectura del heart3_ApSuperv.csv, el cual es el csv proveniente del dataframe final elaborado en el preprocesamiento. Este csv contiene una columna nueva ("X") generada al usar el write.csv. Mediante dplyr eliminaremos dicha columna y tendremos el nuevo dataset limpio para trabajar
+```{r}
+
+
+asuper <- read.csv("heart3_ApSuperv.csv")
+asuper2 <- select(asuper, -X) #eliminamos columna X
+asuper2
+
+dim(asuper2)
+str(asuper2)
+
+```
+
+La validación cruzada proporciona multiples estimaciones de error, en lugar de una estimación única como es el caso de test/train. Si todos las estimaciones son similares podemos estar seguros de la precisión del modelo, por el contrario si las estimaciones tienen resultados muy diferentes indican que el modelo no funciona de manera consistente y no es muy bueno. 
+
+A continuación, mostraremos los diferentes tipos de validaciones cruzadas que aplicaremos para el entrenamiento de nuestro modelo de predicción con la ayuda de la función trainControl(). Además de calcular la probabilidad de la clasificación, calcularemos la probabilidad de las predicciones (Curva ROC).
+
+```{r Función trainControl: Diferentes tipos de validaciones cruzadas}
+ 
+#?trainControl()  #Para saber más sobre la función trainControl()
+
+myControl_clas1 <- trainControl(
+                       method = "cv", #validacion cruzada
+                       number = 10, #10 k folds
+                       summaryFunction = twoClassSummary,
+                       classProbs = TRUE, # Probabilidad de prediccion
+                       savePredictions = TRUE,
+                       verbose = FALSE
+                      )
+
+
+
+```
+
+Función Train es la que entrena el modelo
+
+```{r Funcion Train: entrenamiento y métodos de clasificación}
+
+#?train()
+names(getModelInfo())
+#Classification  methods: rocc, 
+#Regression methods: 
+
+model_clas_glm <- train(HeartDisease~ . ,#atributo a clasificar
+                      asuper2, #Dataframe
+                      method="glm",  #modelo de predicción
+                      trControl=myControl_clas1 #Tipò de validación
+                      )
+
+model_class_glmnet <- train(HeartDisease~ ., asuper2, method = "glmnet", trControl = myControl_clas1) # aplica 3 valores de alpha y 3 valores de lambda
+ 
+model_Class_glmnet
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
