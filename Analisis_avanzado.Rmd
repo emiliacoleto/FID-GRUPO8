@@ -12,8 +12,8 @@ output: html_document
 data <- read.csv('heart.csv')
 
 # Creamos los datos de forma aleatoria
-weigth <- sample(c(6000:15000), 918, replace = TRUE)/100
-heigth <- sample(c(140:200), 918, replace = TRUE)/100
+weigth <- sample(c(5500:19500), 918, replace = TRUE)/100
+heigth <- sample(c(145:200), 918, replace = TRUE)/100
 countries <- c('Spain', 'France', 'Germany', 'England', 'Portugal', 'Cuba', 'China', 'South Africa', 'Italy')
 country <- sample(countries, 918, replace = TRUE)
 
@@ -26,13 +26,13 @@ data$Country <- country
 View(data)
 
 # Exportamos los nuevos datos a un CSV
-write.csv(data,"heart3.csv", row.names = FALSE)
+# write.csv(data,"heart_advanced_with_garbage_new.csv", row.names = FALSE)
 ```
 
 ## Preprocesamiento y visualización de datos
 
 ```{r}
-heart <- read.table("heart2.csv", na.strings="", header=TRUE, sep=",", dec=".")
+heart <- read.table("heart_advanced_with_garbage.csv", na.strings="", header=TRUE, sep=",", dec=".")
 attach(heart)
 table(Cholesterol)
 table(Age)
@@ -92,25 +92,41 @@ boxplot(heart2_Sin_out_OldPeak, horizontal=TRUE)
 boxplot.stats(heart2_Sin_out_OldPeak)
 heart3<- filter(heart2, OldPeak < 3.6)
 
-# TODO: Preprocesamiento Weigth
+# Preprocesamiento Weigth
+Weigth <- heart3$Weigth
+boxplot(Weigth, horizontal=TRUE)
+boxplot.stats(Weigth)
+heart3_Sin_out_Weigth <- Weigth[Weigth > 60 & Weigth < 190]
+boxplot(heart3_Sin_out_Weigth, horizontal=TRUE)
+boxplot.stats(heart3_Sin_out_Weigth)
+heart4<- filter(heart3, Weigth > 60 & Weigth < 190)
 
-# TODO: Preprocesamiento Heigth
+# Preprocesamiento Heigth
+Heigth <- heart4$Heigth
+boxplot(Heigth, horizontal=TRUE)
+boxplot.stats(Heigth)
+heart4_Sin_out_Heigth <- Heigth[Heigth > 1.5 & Heigth < 2.0]
+boxplot(heart4_Sin_out_Heigth, horizontal=TRUE)
+boxplot.stats(heart4_Sin_out_Heigth)
+heart5<- filter(heart4, Heigth > 1.5 & Heigth < 2.0)
 
 # Dataset FINAL  sin outliers
-str(heart3) 
-View(heart3)
+str(heart5) 
+View(heart5)
 
 # Comprobación de outliers
-boxplot(heart3$RestingBP, horizontal = TRUE)
-boxplot(heart3$Cholesterol, horizontal = TRUE)
-boxplot(heart3$MaxHR, horizontal = TRUE)
-boxplot(heart3$Oldpeak, horizontal = TRUE)
+boxplot(heart5$RestingBP, horizontal = TRUE)
+boxplot(heart5$Cholesterol, horizontal = TRUE)
+boxplot(heart5$MaxHR, horizontal = TRUE)
+boxplot(heart5$Oldpeak, horizontal = TRUE)
+boxplot(heart5$Weigth, horizontal = TRUE)
+boxplot(heart5$Heigth, horizontal = TRUE)
 
 # Resumen
-summary(heart3) 
+summary(heart5) 
 
 # Dataset procesado
-write.csv(heart3,"heart_processed.csv", row.names = FALSE)
+write.csv(heart5,"heart_processed.csv", row.names = FALSE)
 
 ```
 
@@ -129,7 +145,7 @@ write.csv(heart3,"heart_processed.csv", row.names = FALSE)
 ```{r}
 # Cargamos los datos
 library(tidyverse)
-datos <- read_csv(file = "./heart_processed.csv", col_names = TRUE)
+datos <- read_csv(file = "./heart_advanced_processed.csv", col_names = TRUE)
 
 # Añadimos una columna para el identificador de cada fila
 datos <- tibble::rowid_to_column(datos, "ID")
@@ -147,7 +163,13 @@ datos$MaxHR<-cut(datos$MaxHR, c(70,75,80,85,90,95,100,105,110,115,120,125,130,
                                  190,195,200), include.lowest = TRUE, right = FALSE)
 datos$Oldpeak<-cut(datos$Oldpeak, c(0.,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0), 
                     include.lowest = TRUE, right = FALSE)
-datos$Weigth<-cut(datos$Weigth, c(60.0,65.0,70.0,75.0,80.0,85.0,90.0,95.0,100.0,105.0,110.0,115.0,120.0,125.0,130.0,135.0,140.0,145.0,150.0), 
+datos$Weigth<-cut(datos$Weigth, c(55.0,60.0,65.0,70.0,75.0,80.0,85.0,90.0,95.0,
+                                   100.0,105.0,110.0,115.0,120.0,125.0,130.0,
+                                   135.0,140.0,145.0,150.0,155.0,160.0,165.0,
+                                   170.0,175.0,180.0,185.0,190.0,195.0), 
+                    include.lowest = TRUE, right = FALSE)
+datos$Heigth<-cut(datos$Heigth, c(1.45,1.50,1.55,1.60,1.65,1.70,1.75,1.80,1.85,
+                                  1.90,1.95,2.00), 
                     include.lowest = TRUE, right = FALSE)
 
 # Mostramos el dataset discretizado
@@ -160,7 +182,7 @@ write.csv(datos,"heart_discretized.csv", row.names = FALSE)
 library(arules)
 
 # Objeto de tipo transaction
-transacciones <- read.transactions(file = "./heart_discretized.csv",
+transacciones <- read.transactions(file = "./heart_advanced_discretized.csv",
                                    format = "basket",
                                    sep = ",",
                                    header = TRUE,
