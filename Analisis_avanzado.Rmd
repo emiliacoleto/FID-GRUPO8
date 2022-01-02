@@ -21,6 +21,7 @@ country <- sample(countries, 918, replace = TRUE)
 data$Weigth <- weigth
 data$Heigth <- heigth
 data$Country <- country
+data <- tibble::rowid_to_column(data, "ID")
 
 # Visualizamos los datos
 View(data)
@@ -38,34 +39,36 @@ write.csv(data,"heart3.csv", row.names = FALSE)
 ## Aplicación del análisis no supervisado
 
 ### Clustering Jeraquizado
-
-```{r}
-data <- read.csv('heart2.csv', head = TRUE, na = "")
-
-library(ClustOfVar)
-
-xquant <- data[,c(1,4,5,6,8,10,12,13,14)] # Numeric variables
-xqual <- data[,c(2,3,7,9,11,15)]          # Categorical variables
-
-tree <- hclustvar(xquant, xqual)
-plot(tree)
-```
+A continuación vamos a realizar un análisis de Cluster Jerarquizado sobre el dataset modificado.
 
 ```{r}
 library(cluster)
+library(purrr)
+data <- read.csv('heart2.csv')
 
-d <- dist(data, method="euclidean")
-# Keep in mind that this is only for mixed numeric and categorical data.
-# See the note below if you are using only numeric variables.
+# Añadimos un identificador a cada dato
+data <- tibble::rowid_to_column(data, "ID")
+data <- na.omit(data)
 
-fit <- hclust(d=d, method="complete")    # Also try: method="ward.D"   
-plot(fit, hang=-1)
-groups <- cutree(fit, k=4)   # "k=" defines the number of clusters you are using   
-rect.hclust(fit, k=4, border="red") # draw dendogram with red borders around the 4 clusters   
+# Nos quedamos solo con las variables numéricas y no binarias
+data <- data[,c(1,2,5,6,7,9,14,15)] #
+
+# Dissimilarity matrix
+d <- dist(data, method = "euclidean")
+# Hierarchical clustering using Complete Linkage
+hc1 <- hclust(d, method = "complete" )
+# Plot the obtained dendrogram
+plot(hc1, cex = 0.6, hang = -1)
 ```
 
 ```{r}
-kfit <- kmeans(d, 3)
-clusplot(as.matrix(d), kfit$cluster, color=T, shade=T, labels=2, lines=0)
+plot(hc1, cex = 0.6, hang = -1)
+rect.hclust(hc1, k = 7, border = 2:5)
 ```
+```{r}
+clust <- cutree(hc1, k = 3)
 
+library(factoextra)
+
+fviz_cluster(list(data = data, cluster = clust)) 
+```
