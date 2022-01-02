@@ -32,11 +32,60 @@ write.csv(data,"heart3.csv", row.names = FALSE)
 ## Preprocesamiento y visualización de datos
 
 ```{r}
+library(dplyr)
+#all character columns to factor:
+heart2df <- mutate_if(df, is.character, as.factor)
 
+# select character columns 'char1', 'char2', etc. to factor:
+#heart2df <- mutate_at(heart2, vars(HeartDisease), as.factor)
 ```
+
+
 
 ## Aplicación del análisis no supervisado
 
 ```{r}
+#installation caret 
+#install.packages("caret")
+library(caret)
+library(ggplot2)
+library(lattice)
+# division en entrenamiento y test 
+set.seed(100)
+IndicesEntrenamiento <- createDataPartition(y = heart2df$Age,
+                                            p = 0.6,
+                                            list = FALSE)
+Entrenamiento <- heart2df[IndicesEntrenamiento,]
+Test <- heart2df[-IndicesEntrenamiento,]
+```
+
+```{r}
+# Define el grid de parámetros a probar
+valores <- expand.grid(k = seq(1, 3, 1)) 
+
+# Define los detalles del método de validación cruzada o remuestreo
+ajustes <- trainControl(method='cv',  # validación cruzada
+             number = 15)  # diez submuestras
+
+
+# Aplica el método seleccionando el valor óptimo de k
+set.seed(100)
+resultado.knn <- train(HeartDisease ~ .,
+      data = heart2df,
+      method = 'knn',
+      tuneGrid = valores,
+      trControl = ajustes)
+
+resultado.knn$results$Accuracy
+```
+
+```{r}
+plot(resultado.knn)
+modelLookup('knn')
+
+```
+```{r}
+predicciones <- predict(resultado.knn,heart2df)
+confusionMatrix(predicciones, heart2df$HeartDisease)
 
 ```
