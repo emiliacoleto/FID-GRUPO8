@@ -33,6 +33,8 @@ View(data)
 ## Preprocesamiento y visualización de datos
 
 ```{r}
+library(tidyverse)
+
 heart <- read.table("heart_advanced_with_garbage.csv", na.strings="", header=TRUE, sep=",", dec=".")
 attach(heart)
 table(Cholesterol)
@@ -134,20 +136,25 @@ write.csv(heart5,"heart_processed.csv", row.names = FALSE)
 ## Aplicación del análisis no supervisado
 
 ### Clustering Jeraquizado
-A continuación vamos a realizar un análisis de Cluster Jerarquizado sobre el dataset modificado.
+A continuación vamos a realizar un análisis de Cluster Jerarquizado sobre el dataset modificado una vez los datos ya están procesados, esto nos será útil para identificar conglomerados de datos que serán similares. Comenzamos leyendo los datos procesados para asignarlos a una variable y asociando un id único a cada dato para que el cluster pueda identificarlos.
+
+Luego nos quedamos con las columnas numéricas, ya que las categóricas y las binarias no pueden ser analizadas para calcular la similaridad entre dos datos. Y las escalamos para que los datos queden contenidas en el mismo eje de coordenadas y el agrupamiento no sea algo arbitrario.
 
 ```{r}
 library(cluster)
-library(purrr)
-data <- read.csv('heart2.csv')
+data <- read.csv('heart_advanced_processed.csv')
 
-# Añadimos un identificador a cada dato
 data <- tibble::rowid_to_column(data, "ID")
-data <- na.omit(data)
 
 # Nos quedamos solo con las variables numéricas y no binarias
 data <- data[,c(1,2,5,6,7,9,14,15)] #
 
+data <- scale(data)
+```
+
+Una vez tenemos los datos que queremos escalados correctamente, procedemos a calcular los valores de distancia entre los datos con la media euclidiana, aunque se pueden usar otro tipos de argumentos, se ha elegido esta porque es la estándar. Luego calculamos el dendograma del cluster y lo pintamos para representar graficamente las agrupaciones de datos similares.
+
+```{r}
 # Dissimilarity matrix
 d <- dist(data, method = "euclidean")
 # Hierarchical clustering using Complete Linkage
@@ -156,19 +163,19 @@ hc1 <- hclust(d, method = "complete" )
 plot(hc1, cex = 0.6, hang = -1)
 ```
 
+Como podemos observar entre la altura 6 y 8, es decir entre el mayor rango de similitud encontramos 3 agrupaciones de datos que son similares entre sí. Para verlo de manera mas gráfica recurriremos a demarcarlos.
+
 ```{r}
 plot(hc1, cex = 0.6, hang = -1)
-rect.hclust(hc1, k = 7, border = 2:5)
+rect.hclust(hc1, k = 3, border = 2:8)
 ```
+
+También se proporciona una manera mas gráfica de verlo usando la función kmeans para calcular las similitudes con la distancia anteriormente calculada y pintándolo en una matriz de clusteres.
 
 ```{r}
-clust <- cutree(hc1, k = 3)
-
-library(factoextra)
-
-fviz_cluster(list(data = data, cluster = clust)) 
+kfit <- kmeans(d, 3)
+clusplot(as.matrix(d), kfit$cluster, color=T, shade=T, labels=2, lines=0)
 ```
-
 
 ## Reglas de asociación
 
