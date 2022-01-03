@@ -405,6 +405,7 @@ ggplot(data, mapping=(aes(x=Ataque, y=Individuos, fill=Pendiente))) +
   geom_bar(stat="identity", position = 'dodge') +
   geom_text(mapping=(aes(label=Individuos)), position = position_dodge(0.9))
 ```
+
 Podemos afirmar que las personas sin pendiente en el segmento ST, padecen más ataques al corazón que las de pendiente ascendente o descendente.
 
 ```{r Análisis a realizar: SUPERVISADO. Modelos predictivos de clasificación: Algoritmo ID3 y KNN. Método de Evaluación: Curva ROC}
