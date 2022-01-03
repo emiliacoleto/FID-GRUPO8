@@ -406,3 +406,128 @@ ggplot(data, mapping=(aes(x=Ataque, y=Individuos, fill=Pendiente))) +
   geom_text(mapping=(aes(label=Individuos)), position = position_dodge(0.9))
 ```
 Podemos afirmar que las personas sin pendiente en el segmento ST, padecen más ataques al corazón que las de pendiente ascendente o descendente.
+
+### Análisis supervisado: KNN
+```{r Carga de librerías y obtención de datos}
+library(tidyverse)
+library(class)
+library(gmodels)
+library(caret)
+data <- read.delim("heart3_ApSuperv.csv", sep = ",", head = TRUE)
+```
+
+```{r Transformación de datos: de cualitativos a cuantitativos}
+transformData <- function(data = data) {
+  for(i in 1:nrow(data)) {
+    #Transformo sexo
+    if(data[i,"Sex"]=="M"){
+      data[i,"Sex"]<-0
+    }else{
+      data[i,"Sex"]<-1
+    }
+    #Transformo dolor de pecho "ASY", "ATA", "NAP", "TA"
+    if(data[i,"ChestPainType"]=="ASY"){
+      data[i,"ChestPainType"]<-0
+    }else if(data[i,"ChestPainType"]=="ATA") {
+      data[i,"ChestPainType"]<-1
+    }else if(data[i,"ChestPainType"]=="NAP") {
+      data[i,"ChestPainType"]<-2
+    }else {
+      data[i,"ChestPainType"]<-3
+    }
+    #Transformo resultados electrocardiográfico "LVH", "Normal", "ST"
+    if(data[i,"RestingECG"]=="LVH"){
+      data[i,"RestingECG"]<-0
+    }else if(data[i,"RestingECG"]=="Normal") {
+      data[i,"RestingECG"]<-1
+    }else {
+      data[i,"RestingECG"]<-2
+    }
+    #Transformo angina
+    if(data[i,"ExerciseAngina"]=="N"){
+      data[i,"ExerciseAngina"]<-0
+    }else{
+      data[i,"ExerciseAngina"]<-1
+    }
+    #Transformo pendiente del segmento ST "Down", "Flat", "Up"
+    if(data[i,"ST_Slope"]=="Down"){
+      data[i,"ST_Slope"]<-0
+    }else if(data[i,"ST_Slope"]=="Flat") {
+      data[i,"ST_Slope"]<-1
+    }else {
+      data[i,"ST_Slope"]<-2
+    }
+  }
+  #Paso todos los datos a tipos numéricos
+  data$Sex <- as.integer(data$Sex)
+  data$ChestPainType <- as.integer(data$ChestPainType)
+  data$RestingECG <- as.integer(data$RestingECG)
+  data$ExerciseAngina <- as.integer(data$ExerciseAngina)
+  data$ST_Slope <- as.integer(data$ST_Slope)
+  return(data)
+}
+transformedData <- transformData(data)
+transformedData
+```
+
+```{r KNN}
+#Separo los datos de entrenamiento (75%) y test (25%)
+train <- transformedData[1:(0.75*nrow(transformedData)),]
+test <- transformedData[(0.75*nrow(transformedData)+1):674,]
+
+#Guardo la columna a predecir
+train_labels <- train$HeartDisease
+test_labels <- test$HeartDisease
+
+#Copio los datos para el knn
+knn_train <- train
+knn_test <- test
+
+#Elimino id y columna a predecir
+knn_train$HeartDisease <- NULL
+knn_train$X <- NULL
+knn_test$HeartDisease <- NULL
+knn_test$X <- NULL
+
+#Normalizo los datos de entrenamiento y test
+normalize <- function(x){
+  return ((x - min(x))/(max(x) - min(x)))
+}
+train_n <- as.data.frame(lapply(knn_train[1:11], normalize))
+test_n <- as.data.frame(lapply(knn_test[1:11], normalize))
+
+#KNN
+set.seed(1)
+pred <- knn(train = train_n, test = test_n, cl = train_labels, k = 22)
+
+#Matriz de confusión
+tab <- table(test_labels, pred)
+tab
+
+#Precisión
+acc_knn <- sum(diag(tab)) / sum(tab)
+print(acc_knn)
+```
+Tras ejecutar el algoritmo KNN, con este modelo (con k=22, ya que sqrt(505)~=22) obtenemos una precisión del 79.17% para acertar una predicción. Por tanto, en un  20.83% de las ocasiones fallaremos.
+
+```{r Mejora del modelo}
+set.seed(1)
+range <- 1:round(0.2 * nrow(train_n))
+acc_m <- rep(0, length(range))
+
+for(k in range) {
+  pred_m <- knn(train_n, test_n, train_labels, k = k)
+  conf <- table(test_labels, pred_m)
+  acc_m[k] <- sum(diag(conf)) / sum(conf)
+}
+
+# Grafica con las diferentes precisiones obtenidas
+plot(range, acc_m, xlab = "k")
+
+# Coge el k que devuelve la máxima precisión
+which.max(acc_m)
+acc_m[which.max(acc_m)]
+```
+Por tanto, situando el número de vecinos a 5 obtenemos la mayor precisión del modelo: 82,74%.
+
+
