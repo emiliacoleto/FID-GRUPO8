@@ -411,6 +411,9 @@ Podemos afirmar que las personas sin pendiente en el segmento ST, padecen más a
 ```
 ##
 ```{r Instalación y carga de paquete caret y rattle}
+#TODO: ALGUN ALGORITMO USANDO DEPENDENCIAS del paquete CARET (VER PRACTICA 5 y final de este archivo)
+#TODO: ALGORITMO KNN. jodienda de tener que pasar valores discretos a numericos.
+
 install.packages('caret')
 library(caret)
 library(dplyr) #Para manipular dataframes
@@ -444,7 +447,9 @@ set.seed(1)
 
 ```
 
-Generaremos un árbol de decisión acorde a nuestro dataset en primer lugar.
+Generaremos un modelo de árbol de decisión mediante el algoritmo CART con criterio de división Gini acorde a nuestro dataset preprocesado (asuper)..
+
+#Interpretación
 El árbol obtenido lo podemos interpretar (de arriba a abajo) de la siguiente manera:
 -Fijándonos en el nodo que se encuentra más arriba (ST_Slope), tenemos que la mayoría de los datos clasifica como 0 con un 55% (NO HearDisease) antes que 1 con un 45% ( SI HeartDisease) y la separación que hace es respecto a la pendiente del segmento ST (ST_Slope) = UP
 
@@ -453,7 +458,7 @@ El árbol obtenido lo podemos interpretar (de arriba a abajo) de la siguiente ma
 Por el contrario, si ST_Slope tiene otro valor distinto a UP, el siguiente nodo(3) será el de SEX = F, en el que la mayoría clasifica como 1 (SI HEARTDISEASE) con un 77% y un 23% restante con un 0 (NO HEARTDISEASE).
 
 y así sucesivamente con los nodos inferiores.
-```{r Generación de árbol de decisión}
+```{r Generación de árbol de decisión, Algoritmo CART con criterio de división Gini}
 
 tree <- rpart(HeartDisease~., asuper, method = "class")
 
@@ -462,13 +467,15 @@ fancyRpartPlot(tree)
 
 ```
 
-```{r Predicción, matriz de confusión y accuracy del árbol de decisión. Modelo indice Gini CART }
+Calculamos la matriz de confusión para tener una primera aproximación de saber como clasifica este modelo elaborado por el algoritmo CART
+
+```{r Predicción, matriz de confusión y accuracy del árbol de decisión. Algortimo CART }
 # Predice los valores del conjunto de asuper a partir del árbol de decisión anteriormente generado.
 pred <- predict(tree, asuper, type = "class")
 
 # Construye la matriz de confusion
 conf <- table(asuper$HeartDisease, pred)
-conf
+conf #60 falsos positivos, 33 falsos negativos, 309 verdaderos negativos, 272 verdaderos positivos
 
 # Calcula accuracy, la exactitud o el porcentaje de casos que el modelo ha acertado.
 acc <- sum(diag(conf)) / sum(conf)
@@ -477,14 +484,18 @@ print(acc)
 
 ```
 
-```{r Algoritmo ID3, ya que se utiliza la ganancia de informacion como heuristica}
+Pasamos a probar el algoritmo ID3, el cual se asemeja a CART ya que son árboles de decisión, pero lo diferencia de este último en que utiliza la ganancia de información como heurística. También mostramos la matriz de confusión.
+
+```{r Modelo construido por el Algoritmo ID3 y su respectiva matriz de confusión}
 # Cambia la llamada a rpart para utilizar como heurística la ganancia de información
 tree_i <- rpart(HeartDisease ~ ., asuper, method = "class", 
-                parms = list(split = "information"))
+                parms = list(split = "information"),control = rpart.control(cp=0.01))
+
+fancyRpartPlot(tree_i) #Árbol de decisión generado mediante algoritmo ID3.
 
 pred_i <- predict(tree_i, asuper, type = "class")
 conf_i <- table(asuper$HeartDisease, pred_i)
-conf_i
+conf_i #45 falsos positivos, 38 falsos negativos, 324 verdaderos negativos, 267 verdaderos positivos
 acc_i <- sum(diag(conf_i)) / sum(conf_i)
 
 print("La accuracy con el algoritmo ID3: ")
@@ -496,44 +507,106 @@ acc
 
 ```
 
+Se calcula la predicción de los valores de la probabilidad que ha realizado cada algoritmo en sus modelos de árboles de decisión correspondientes (CART e ID3).
+#La predicción de los valores de la probabilidad se refiere a cuanto de seguro está el algoritmo (predicción) de que ha clasificado correctamente o no.
 
 ```{r Predicción de los valores de la probabilidad de cada modelo (CART e ID3)}
 # Predecimos valores de probabilidad utilizando el modelo anterior (índice gini CART)
 all_probs <- predict(tree, asuper, type="prob")
 
-# Print out all_probs
+# Muestra all_probs
 summary(all_probs)
 
-# Hay que seleccionar la columna numero 2
+# Hay que seleccionar la columna numero 2, que marca los aciertos (1)
 probs <- all_probs[,2]
 probs
-# TREE_I es ID_3 porque se creo con ganancia de información como heurísticas
-# Predict probability values using the model: all_probs
+
+# tree_i es ID_3 porque se creó con ganancia de información como heurística
+# Predecimos valores de probabilidad utilizando el modelo ID3
 all_probs_i <- predict(tree_i, asuper, type="prob")
 summary(all_probs_i)
+
+#Hay que seleccionar la columna numero 2, que marca los aciertos (1)
 probs_i <- all_probs_i[,2]
 probs_i
+
 ```
 
+
+Pasaremos a evaluar mediante la curva ROC y el área bajo la curva (valor AUC) cuanto de bien ha clasificado cada modelo elaborado por cada algoritmo (CART e ID3)
+
+Podemos confirmar que entre el algoritmo CART e ID3, el algoritmo ID3 distingue mejor entre clases positivas y negativas, por lo que nos quedaríamos con el modelo que realiza este algoritmo.
 ```{r Evaluación de los modelos mediante curva ROC. Valor AUC o área bajo la curva}
+#Evaluación algoritmo CART
+
+# Prediction object:pred.
+pred <- prediction(probs, asuper$HeartDisease)
+
+# Performance object: perf
+perf <- performance(pred, "tpr", "fpr")
+
+# Plot de la curva ROC
+plot(perf)
+
+# Make a performance object: perf
+perf_auc <- performance(pred, "auc")
+
+# Impresión del valor AUC
+print(perf_auc@y.values[[1]]) #89,35% de que el modelo pueda distinguir entre clase positiva y clase negativa
+
+
+
+#Evaluación algoritmo ID3
+
+# Prediction object: ID3
+pred_i <- prediction(probs_i, asuper$HeartDisease)
+
+# Performance object: perf_i
+perf_i <- performance(pred_i, "tpr", "fpr")
+
+# Plot de la curva ROC
+plot(perf_i)
+
+# Make a performance object: perf_i
+perf_auc_i <- performance(pred_i, "auc")
+
+# Impresión del valor AUC
+print(perf_auc_i@y.values[[1]])#91,15% de que el modelo pueda distinguir entre clase positiva y clase negativa
+
+
+
+#Dibujado de curvas ROC(perf, perf_i)
+plot(perf)
+plot(perf_i)
+
 
 ```
+###########################################################################################################
+
+#TODO: 
+Algoritmo Knn (jodienda de tener que pasar atributos discretos como ChestPainType, RestingECG... a numéricos)
+Practica 3: Clasificacion Ejercicio 3
+
+
+#TODO
+Algun algoritmo que se pueda sacar del paquete Caret de los cojones, ya que la profesora le dio importancia a eso 
+y hace algunas cosas como cross validation y eso que lo ha mencionado 293423 veces en clase
+Estuve probando con algunos metodos y daban todos problemas, pero hay muchos y alguno debería funcionar.
+
+Para entender algo de lo que he hecho abajo, echale un vistazo antes a la practica 5: Paquete Caret
+
+
+
+#########################################################################################################
 
 
 
 
 
 
-
-
-
-
-
-
-##################################
-############################################
-#### LO DE ABAJO HABRA QUE QUITARLO  ##############
-############################################
+####################################
+#### LO DE ABAJO HABRA QUE CAMBIARLO. Sacado de la practica 5: paquete Caret  ###
+####################################
 
 La validación cruzada proporciona multiples estimaciones de error, en lugar de una estimación única como es el caso de test/train. Si todos las estimaciones son similares podemos estar seguros de la precisión del modelo, por el contrario si las estimaciones tienen resultados muy diferentes indican que el modelo no funciona de manera consistente y no es muy bueno. 
 
