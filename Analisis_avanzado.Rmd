@@ -142,10 +142,35 @@ write.csv(heart5,"heart_processed.csv", row.names = FALSE)
 # https://www.cienciadedatos.net/documentos/43_reglas_de_asociacion#Arules_package
 # https://rdrr.io/cran/arules/man/discretize.html
 
+## Discretización y adaptación del dataset
 ```{r}
 # Cargamos los datos
 library(tidyverse)
 datos <- read_csv(file = "./heart_advanced_processed.csv", col_names = TRUE)
+
+datos$Sex<-replace(datos$Sex, datos$Sex == "M","Male") 
+datos$Sex<-replace(datos$Sex, datos$Sex == "F","Female")
+
+datos$FastingBS<-replace(datos$FastingBS, datos$FastingBS == 0,"No fasting blood sugar") 
+datos$FastingBS<-replace(datos$FastingBS, datos$FastingBS == 1,"Fasting blood sugar") 
+
+datos$ChestPainType<-replace(datos$ChestPainType, datos$ChestPainType == "ATA","Chest pain: ATA")
+datos$ChestPainType<-replace(datos$ChestPainType, datos$ChestPainType == "NAP","Chest pain: NAP")
+datos$ChestPainType<-replace(datos$ChestPainType, datos$ChestPainType == "ASY","Chest pain: ASY")
+datos$ChestPainType<-replace(datos$ChestPainType, datos$ChestPainType == "TA","Chest pain: TA")
+
+datos$RestingECG<-replace(datos$RestingECG, datos$RestingECG == "Normal","Resting ECG: Normal")
+datos$RestingECG<-replace(datos$RestingECG, datos$RestingECG == "ST","Resting ECG: ST")
+datos$RestingECG<-replace(datos$RestingECG, datos$RestingECG == "LVH","Resting ECG: LVH")
+
+datos$ExerciseAngina<-replace(datos$ExerciseAngina, datos$ExerciseAngina == "N","No exercise angina")
+datos$ExerciseAngina<-replace(datos$ExerciseAngina, datos$ExerciseAngina == "Y","Exercise angina")
+
+datos$ST_Slope<-replace(datos$ST_Slope, datos$ST_Slope == "Up","ST_Slope: Up")
+datos$ST_Slope<-replace(datos$ST_Slope, datos$ST_Slope == "Flat","ST_Slope: Flat")
+
+datos$HeartDisease<-replace(datos$HeartDisease, datos$HeartDisease == 0,"No heart disease")
+datos$HeartDisease<-replace(datos$HeartDisease, datos$HeartDisease == 1,"Heart disease")
 
 # Añadimos una columna para el identificador de cada fila
 datos <- tibble::rowid_to_column(datos, "ID")
@@ -172,11 +197,28 @@ datos$Heigth<-cut(datos$Heigth, c(1.45,1.50,1.55,1.60,1.65,1.70,1.75,1.80,1.85,
                                   1.90,1.95,2.00), 
                     include.lowest = TRUE, right = FALSE)
 
+datos$Age <- paste("Age:", datos$Age, sep=" ")
+datos$RestingBP <- paste("RestingBP:", datos$RestingBP, sep=" ")
+datos$Cholesterol <- paste("Cholesterol:", datos$Cholesterol, sep=" ")
+datos$MaxHR <- paste("MaxHR:", datos$MaxHR, sep=" ")
+datos$Oldpeak <- paste("Oldpeak:", datos$Oldpeak, sep=" ")
+datos$Weigth <- paste("Weigth:", datos$Weigth, sep=" ")
+datos$Heigth <- paste("Heigth:", datos$Heigth, sep=" ")
+
+# Modificamos los valores de algunas columnas para poder interpretar los datos
+#datos<-replace(datos$Sex, datos$Sex<"M","Male") 
+
+
 # Mostramos el dataset discretizado
 View(datos)
 
 # Generamos el nuevo CSV discretizado
-write.csv(datos,"heart_discretized.csv", row.names = FALSE)
+write.csv(datos,"heart_advanced_discretized.csv", row.names = FALSE)
+
+```
+
+
+```{r}
 
 # Librería arules
 library(arules)
@@ -191,6 +233,22 @@ transacciones <- read.transactions(file = "./heart_advanced_discretized.csv",
 
 # Mostramos las 5 primeras transacciones
 inspect(transacciones[1:5])
+
+# Tamaño de cada transacción
+tamanyos <- size(transacciones)
+summary(tamanyos)
+
+data.frame(tamanyos) %>%
+  ggplot(aes(x = tamanyos)) +
+  geom_histogram() +
+  labs(title = "Distribución del tamaño de las transacciones",
+       x = "Tamaño") +
+  theme_bw()
+
+# Mostramos los 5 elementos que más aparecen
+frecuencia_items <- itemFrequency(x = transacciones, type = "absolute")
+frecuencia_items %>% sort(decreasing = TRUE) %>% head(5)
+
 ```
 
 
