@@ -35,6 +35,7 @@ write.csv(data,"heart3.csv", row.names = FALSE)
 library(dplyr)
 #all character columns to factor:
 heart2df <- mutate_if(data, is.character, as.factor)
+heart2df <- mutate_if(heart2df, is.factor, as.integer)
 
 # select character columns 'char1', 'char2', etc. to factor:
 heart2df <- mutate_at(heart2df, vars(HeartDisease), as.factor)
@@ -60,32 +61,74 @@ Test <- heart2df[-IndicesEntrenamiento,]
 ```
 
 ```{r}
-# Define el grid de parámetros a probar
-valores <- expand.grid(k = seq(1, 3, 1)) 
+# En este caso la variable objetivo, nuestra y, que es la variable: HeartDisease.
+Entrenamiento$HeartDisease
 
-# Define los detalles del método de validación cruzada o remuestreo
-ajustes <- trainControl(method='cv',  # validación cruzada
-             number = 15)  # diez submuestras
+# Gráfico de dispersión de las clases según las variables predictoras.
+
+pairs(Entrenamiento[-12],col=Entrenamiento$HeartDisease)
 
 
-# Aplica el método seleccionando el valor óptimo de k
-set.seed(100)
-resultado.knn <- train(HeartDisease ~ .,
-      data = heart2df,
-      method = 'knn',
-      tuneGrid = valores,
-      trControl = ajustes)
 
-resultado.knn$results$Accuracy
-```
-
-```{r}
-plot(resultado.knn)
-modelLookup('knn')
 
 ```
 ```{r}
-predicciones <- predict(resultado.knn,heart2df)
-confusionMatrix(predicciones, heart2df$HeartDisease)
+
+# Verificamos la correlación entre las variables NUMÉRICAS existentes.
+
+correlation=cor(Entrenamiento[-12])
+correlation
+```
+```{r}
+# El objetivo del Kmeans o K medias es formar grupos homogéneos, distintos entre si. En este caso, nuestro k=3, formaremos 3 grupos, porque ya conocemos que hay  3 distintos tipos de iris, sin embargo, el n, dependerá del problema.
+
+grupos=kmeans(Entrenamiento[-12],2)
+
+# La función kmeans recibe dos parametros: datos (solo las variables numericas) y k (número de grupos a formar).
+grupos
+# Con la siguiente sentencia se obtiene el grupo al cual pertenecen los registros o filas del set de datos según la función: kmeans .
+
+grupos$cluster
+```
+```{r}
+# Evaluación de Resultados
+# Ordenando por la columna 'privileges'
+Entrenamiento_ordenado <- Entrenamiento[order(Entrenamiento$HeartDisease), ]
+
+# Primeras filas
+head(Entrenamiento_ordenado)
+
+
+clases = Entrenamiento_ordenado[12]
+
+
+# Asignamos a la variable: predicho, las clases predichas por el kmedias.
+
+predicho= NULL
+
+# La función: mode (moda), contará la cantidad de registros clasificados como
+# en cada llamada y, retornará la mayor cantidad de ocurrencias vinculadas a la clase que se le asigne.
+
+mode=function (x){
+ux=unique(x)
+ux[which.max(tabulate(match(x,ux)))]
+}
+predicho [grupos$cluster==mode(grupos$cluster[1:245])]="no ataque" 
+predicho [grupos$cluster==mode(grupos$cluster[246:553])]="ataque"
+
+predicho=factor(predicho) 
+
+# Matriz de confusión 
+
+MC = table(clases, predicho=clases) 
+MC 
+
+#precision=(sum(diag(MC)))/sum(MC) 
+#precision 
+
+#error=1-precision 
+#error
+```
+```{r}
 
 ```
