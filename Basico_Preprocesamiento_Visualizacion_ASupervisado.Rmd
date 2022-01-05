@@ -527,6 +527,10 @@ plot(range, acc_m, xlab = "k")
 # Coge el k que devuelve la máxima precisión
 which.max(acc_m)
 acc_m[which.max(acc_m)]
+
+pred_f <- knn(train_n, test_n, train_labels, k = 5)
+tab_f <- table(test_labels, pred_f)
+tab_f
 ```
 Por tanto, situando el número de vecinos a 5 obtenemos la mayor precisión del modelo: 82,74%.
 
