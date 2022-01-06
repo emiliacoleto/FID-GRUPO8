@@ -1,0 +1,154 @@
+---
+title: "Analisis_avanzado"
+output: html_document
+---
+
+# Análisis Avanzado 
+
+## Modificación del dataset
+
+```{r}
+# Leemos los datos del CSV
+data <- read.csv('heart.csv')
+
+# Creamos los datos de forma aleatoria
+weigth <- sample(c(6000:15000), 918, replace = TRUE)/100
+heigth <- sample(c(140:200), 918, replace = TRUE)/100
+countries <- c('Spain', 'France', 'Germany', 'England', 'Portugal', 'Cuba', 'China', 'South Africa', 'Italy')
+country <- sample(countries, 918, replace = TRUE)
+
+# Los agregamos al dataframe
+data$Weigth <- weigth
+data$Heigth <- heigth
+data$Country <- country
+
+# Visualizamos los datos
+View(data)
+
+# Exportamos los nuevos datos a un CSV
+write.csv(data,"heart3.csv", row.names = FALSE)
+```
+
+## Preprocesamiento y visualización de datos
+
+```{r}
+library(dplyr)
+#all character columns to factor:
+heart2df <- mutate_if(data, is.character, as.factor)
+heart2df <- mutate_if(heart2df, is.factor, as.integer)
+
+# select character columns 'char1', 'char2', etc. to factor:
+heart2df <- mutate_at(heart2df, vars(HeartDisease), as.factor)
+```
+
+
+
+## Aplicación del análisis no supervisado
+
+```{r}
+#installation caret 
+#install.packages("caret")
+library(caret)
+library(ggplot2)
+library(lattice)
+# division en entrenamiento y test 
+set.seed(100)
+IndicesEntrenamiento <- createDataPartition(y = heart2df$Age,
+                                            p = 0.6,
+                                            list = FALSE)
+Entrenamiento <- heart2df[IndicesEntrenamiento,]
+Test <- heart2df[-IndicesEntrenamiento,]
+```
+
+```{r}
+# En este caso la variable objetivo, nuestra y, que es la variable: HeartDisease.
+Entrenamiento$HeartDisease
+
+# Gráfico de dispersión de las clases según las variables predictoras.
+
+pairs(Entrenamiento[-12],col=Entrenamiento$HeartDisease)
+
+
+
+
+```
+```{r}
+
+# Verificamos la correlación entre las variables NUMÉRICAS existentes.
+
+correlation=cor(Entrenamiento[-12])
+correlation
+```
+
+
+```{r}
+set.seed(1234)
+wcss <- vector()
+for(i in 1:20){
+  wcss[i] <- sum(kmeans(Entrenamiento, i)$withinss)
+}
+ggplot() + geom_point(aes(x = 1:20, y = wcss), color = 'blue') + 
+  geom_line(aes(x = 1:20, y = wcss), color = 'blue') + 
+  ggtitle("Método del Codo") + 
+  xlab('Cantidad de Centroides k') + 
+  ylab('WCSS')
+
+```
+
+
+
+
+```{r}
+set.seed(1234)
+kmeans <- kmeans(Entrenamiento, 5, iter.max = 1000, nstart = 10)
+Entrenamiento$cluster <- kmeans$cluster
+ggplot() + geom_point(aes(x = Cholesterol, y = RestingBP , color = cluster), data = Entrenamiento, size = 2) +
+  scale_colour_gradientn(colours=rainbow(4)) +
+  geom_point(aes(x = kmeans$centers[, 1], y = kmeans$centers[, 2]), color = 'black', size = 3) + 
+  ggtitle('Clusters de Datos con k = 5 / K-Medios') + 
+  xlab('Cholesterol') + ylab('RestingBP')
+```
+
+```{r}
+# Evaluación de Resultados
+# Ordenando por la columna 'privileges'
+Entrenamiento_ordenado <- Entrenamiento[order(Entrenamiento$HeartDisease), ]
+
+# Primeras filas
+head(Entrenamiento_ordenado)
+
+
+clases = Entrenamiento_ordenado[12]
+
+
+# Asignamos a la variable: predicho, las clases predichas por el kmedias.
+
+predicho= NULL
+
+# La función: mode (moda), contará la cantidad de registros clasificados como
+# en cada llamada y, retornará la mayor cantidad de ocurrencias vinculadas a la clase que se le asigne.
+
+mode=function (x){
+ux=unique(x)
+ux[which.max(tabulate(match(x,ux)))]
+}
+predicho[grupos$cluster==mode(grupos$cluster[1:245])]="no ataque" 
+predicho[grupos$cluster==mode(grupos$cluster[246:553])]="ataque"
+
+predicho=factor(predicho) 
+predicho
+
+# Matriz de confusión 
+
+MC = table(clases, predicho) 
+MC 
+
+#precision=(sum(diag(MC)))/sum(MC) 
+#precision 
+
+#error=1-precision 
+#error
+```
+```{r}
+
+```
