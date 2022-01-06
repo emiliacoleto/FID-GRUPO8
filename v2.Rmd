@@ -1,0 +1,88 @@
+---
+title: "Analisis_avanzado"
+output: html_document
+---
+
+# Análisis Avanzado 
+
+## Modificación del dataset
+
+```{r}
+# Leemos los datos del CSV
+data <- read.csv('heart.csv')
+
+# Creamos los datos de forma aleatoria
+weigth <- sample(c(6000:15000), 918, replace = TRUE)/100
+heigth <- sample(c(140:200), 918, replace = TRUE)/100
+countries <- c('Spain', 'France', 'Germany', 'England', 'Portugal', 'Cuba', 'China', 'South Africa', 'Italy')
+country <- sample(countries, 918, replace = TRUE)
+
+# Los agregamos al dataframe
+data$Weigth <- weigth
+data$Heigth <- heigth
+data$Country <- country
+
+# Visualizamos los datos
+View(data)
+
+# Exportamos los nuevos datos a un CSV
+write.csv(data,"heart3.csv", row.names = FALSE)
+```
+
+## Preprocesamiento y visualización de datos
+
+```{r}
+library(dplyr)
+#all character columns to factor:
+#heart2df <- mutate_if(data, is.character, as.factor)
+#heart2df <- mutate_if(heart2df, is.factor, as.integer)
+
+# select character columns 'char1', 'char2', etc. to factor:
+#heart2df <- mutate_at(heart2df, vars(HeartDisease), as.factor)
+```
+
+
+
+## Aplicación del análisis no supervisado
+
+```{r}
+#installation caret 
+#install.packages("caret")
+library(caret)
+library(ggplot2)
+library(lattice)
+# division en entrenamiento y test 
+set.seed(100)
+#IndicesEntrenamiento <- createDataPartition(y = heart2df$Age,
+                                           # p = 0.6,
+                                           # list = FALSE)
+#Entrenamiento <- heart2df[IndicesEntrenamiento,]
+#Test <- heart2df[-IndicesEntrenamiento,]
+```
+
+```{r}
+h_data<-data[,12:14]
+#install.packages("cluster")
+library("cluster")
+km<-pam(h_data,10)
+#install.packages("factoextra")
+library("factoextra")
+```
+
+```{r}
+distance <- get_dist(data)
+fviz_dist(distance, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+```
+```{r}
+set.seed(123)
+
+fviz_nbclust(data, kmeans, method = "wss")
+```
+
+```{r}
+fviz_cluster(km, data = h_data,palette = "jco",ggtheme = theme_minimal())
+```
+
+```{r}
+
+```

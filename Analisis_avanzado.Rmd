@@ -113,14 +113,15 @@ mode=function (x){
 ux=unique(x)
 ux[which.max(tabulate(match(x,ux)))]
 }
-predicho [grupos$cluster==mode(grupos$cluster[1:245])]="no ataque" 
-predicho [grupos$cluster==mode(grupos$cluster[246:553])]="ataque"
+predicho[grupos$cluster==mode(grupos$cluster[1:245])]="no ataque" 
+predicho[grupos$cluster==mode(grupos$cluster[246:553])]="ataque"
 
 predicho=factor(predicho) 
+predicho
 
 # Matriz de confusión 
 
-MC = table(clases, predicho=clases) 
+MC = table(clases, predicho) 
 MC 
 
 #precision=(sum(diag(MC)))/sum(MC) 
