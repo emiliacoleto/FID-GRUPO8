@@ -147,7 +147,7 @@ data <- read.csv('heart_advanced_processed.csv')
 data <- tibble::rowid_to_column(data, "ID")
 
 # Nos quedamos solo con las variables numéricas y no binarias
-data <- data[,c(1,2,5,6,7,9,14,15)] #
+data <- data[, c(1,2,5,6,7,9,14,15)] #
 
 data <- scale(data)
 ```
@@ -167,16 +167,18 @@ Como podemos observar entre la altura 6 y 8, es decir entre el mayor rango de si
 
 ```{r}
 plot(hc1, cex = 0.6, hang = -1)
-rect.hclust(hc1, k = 3, border = 2:8)
+rect.hclust(hc1, k = 3, border = 2:4)
 ```
 
-También se proporciona una manera mas gráfica de verlo usando la función kmeans para calcular las similitudes con la distancia anteriormente calculada y pintándolo en una matriz de clusteres.
+También se proporciona una manera mas gráfica de verlo usando la función kmeans para calcular las similitudes con la distancia anteriormente calculada y pintándolo en una matriz de clústeres.
 
 ```{r}
 kfit <- kmeans(d, 3)
-clusplot(as.matrix(d), kfit$cluster, color=T, shade=T, labels=2, lines=0)
-```
 
+library(factoextra)
+
+fviz_cluster(list(data = as.matrix(d), cluster = kfit$cluster), labels = 7)
+```
 ## Reglas de asociación
 
 # Referencias
