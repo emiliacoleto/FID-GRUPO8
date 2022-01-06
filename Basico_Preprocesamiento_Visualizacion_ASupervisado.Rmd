@@ -411,11 +411,12 @@ Podemos afirmar que las personas sin pendiente en el segmento ST, padecen más a
 ```{r Carga de librerías y obtención de datos}
 library(tidyverse)
 library(class)
+install.packages("gmodels")
 library(gmodels)
 library(caret)
 data <- read.delim("heart3_ApSuperv.csv", sep = ",", head = TRUE)
 ```
-
+##
 ```{r Transformación de datos: de cualitativos a cuantitativos}
 transformData <- function(data = data) {
   for(i in 1:nrow(data)) {
@@ -536,14 +537,8 @@ Por tanto, situando el número de vecinos a 5 obtenemos la mayor precisión del 
 
 ```{r Análisis a realizar: SUPERVISADO. Modelos predictivos de clasificación: Algoritmo ID3 y KNN. Método de Evaluación: Curva ROC}
 ```
-##
-```{r Instalación y carga de paquete caret y rattle}
-#TODO: ALGUN ALGORITMO USANDO DEPENDENCIAS del paquete CARET (VER PRACTICA 5 y final de este archivo)
-#TODO: ALGORITMO KNN. jodienda de tener que pasar valores discretos a numericos.
 
-install.packages('caret')
-library(caret)
-library(dplyr) #Para manipular dataframes
+```{r Instalación y carga de paquete ROCR y rattle}
 
 install.packages("rattle")
 
@@ -704,80 +699,5 @@ print(perf_auc_i@y.values[[1]])#91,15% de que el modelo pueda distinguir entre c
 #Dibujado de curvas ROC(perf, perf_i)
 plot(perf)
 plot(perf_i)
-
-
-```
-###########################################################################################################
-
-#TODO: 
-Algoritmo Knn (jodienda de tener que pasar atributos discretos como ChestPainType, RestingECG... a numéricos)
-Practica 3: Clasificacion Ejercicio 3
-
-
-#TODO
-Algun algoritmo que se pueda sacar del paquete Caret de los cojones, ya que la profesora le dio importancia a eso 
-y hace algunas cosas como cross validation y eso que lo ha mencionado 293423 veces en clase
-Estuve probando con algunos metodos y daban todos problemas, pero hay muchos y alguno debería funcionar.
-
-Para entender algo de lo que he hecho abajo, echale un vistazo antes a la practica 5: Paquete Caret
-
-
-
-#########################################################################################################
-
-
-
-
-
-
-####################################
-#### LO DE ABAJO HABRA QUE CAMBIARLO. Sacado de la practica 5: paquete Caret  ###
-####################################
-
-La validación cruzada proporciona multiples estimaciones de error, en lugar de una estimación única como es el caso de test/train. Si todos las estimaciones son similares podemos estar seguros de la precisión del modelo, por el contrario si las estimaciones tienen resultados muy diferentes indican que el modelo no funciona de manera consistente y no es muy bueno. 
-
-A continuación, mostraremos los diferentes tipos de validaciones cruzadas que aplicaremos para el entrenamiento de nuestro modelo de predicción con la ayuda de la función trainControl(). Además de calcular la probabilidad de la clasificación, calcularemos la probabilidad de las predicciones 
-
-```{r Función trainControl: Diferentes tipos de validaciones cruzadas}
- 
-#?trainControl()  #Para saber más sobre la función trainControl()
-myControl_clas1 <- trainControl(
-                       method = "cv", #validacion cruzada
-                       number = 10, #10 k folds
-                       summaryFunction = twoClassSummary,
-                       classProbs = TRUE, # Probabilidad de prediccion
-                       savePredictions = TRUE,
-                       verbose = FALSE
-                      )
-```
-
-Función Train es la que entrena el modelo
-
-```{r Funcion Train: entrenamiento y métodos de clasificación}
-#?train()
-#names(getModelInfo())
-#Classification  methods: rocc, 
-
-
-model_clas_glm <- train(HeartDisease~. ,#atributo a clasificar
-                      asuper2, #Dataframe
-                      method="glm",  #modelo de predicción
-                      trControl=myControl_clas1 #Tipò de validación
-                      )
-model_class_glmnet <- train(HeartDisease~ ., asuper2, method = "glmnet", trControl = myControl_clas1) # aplica 3 valores de alpha y 3 valores de lambda
- 
-model_Class_glmnet
-
-
-asuper2=as.factor(asuper2)
-
-modelo1 <- train(HeartDisease~., data=asuper2, method="lm",trControl=myControl_clas1)
-modelo1
-
-
-
-
-
-
 
 ```
