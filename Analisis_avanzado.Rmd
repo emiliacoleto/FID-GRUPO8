@@ -14,7 +14,7 @@ ipak <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 
-packages <- c("tidyverse","cluster", "factoextra","NbClust","tidyr","dplyr")
+packages <- c("tidyverse","cluster", "factoextra","NbClust","tidyr","dplyr", "arules")
 ipak(packages)
 ```
 
@@ -142,7 +142,7 @@ boxplot(heart5$Heigth, horizontal = TRUE)
 summary(heart5) 
 
 # Dataset procesado
-write.csv(heart5,"heart_processed.csv", row.names = FALSE)
+write.csv(heart5,"heart_advanced_processed.csv", row.names = FALSE)
 
 ```
 
@@ -273,8 +273,6 @@ ggsave(file="procesamiento_NO_Jerárquico(kmeans).pdf", width=15, height=15, dpi
 
 #### Discretización y adaptación del dataset
 ```{r}
-# Cargamos los datos
-library(tidyverse)
 datos <- read_csv(file = "./heart_advanced_processed.csv", col_names = TRUE)
 
 datos$Sex<-replace(datos$Sex, datos$Sex == "M","Male") 
@@ -346,9 +344,6 @@ write.csv(datos,"heart_advanced_discretized.csv", row.names = FALSE)
 ```
 
 ```{r}
-# Librería arules
-library(arules)
-
 # Objeto de tipo transaction
 transacciones <- read.transactions(file = "./heart_advanced_discretized.csv",
                                    format = "basket",
@@ -396,17 +391,11 @@ as(top_5_itemsets, Class = "data.frame") %>%
   labs(title = "Itemsets más frecuentes", x = "itemsets") +
   theme_bw()
 
-# Se muestran los 20 itemsets más frecuentes formados por más de un item.
-inspect(sort(itemsets[size(itemsets) > 1], decreasing = TRUE)[1:20])
+# Se muestran los 10 itemsets más frecuentes formados por más de un item.
+inspect(sort(itemsets[size(itemsets) > 1], decreasing = TRUE)[1:10])
 
-# Se muestran los 20 itemsets más frecuentes formados por más de dos items.
-inspect(sort(itemsets[size(itemsets) > 2], decreasing = TRUE)[1:20])
-
-# Se muestran los 20 itemsets más frecuentes formados por más de tres items.
-inspect(sort(itemsets[size(itemsets) > 3], decreasing = TRUE)[1:20])
-
-# Se muestran los 20 itemsets más frecuentes formados por más de cuatro items.
-inspect(sort(itemsets[size(itemsets) > 4], decreasing = TRUE)[1:20])
+# Se muestran los 10 itemsets más frecuentes formados por más de dos items.
+inspect(sort(itemsets[size(itemsets) > 2], decreasing = TRUE)[1:10])
 
 # Reglas de asociación
 soporte <- 30 / dim(transacciones)[1]
