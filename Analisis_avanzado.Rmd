@@ -5,6 +5,19 @@ output: html_document
 
 # Análisis Avanzado
 
+## Instalación de librerías necesarias
+```{r}
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+packages <- c("tidyverse","cluster", "factoextra","NbClust","tidyr","dplyr")
+ipak(packages)
+```
+
 ## Modificación del dataset
 
 ```{r}
@@ -179,13 +192,86 @@ library(factoextra)
 
 fviz_cluster(list(data = as.matrix(d), cluster = kfit$cluster), labels = 7)
 ```
-## Reglas de asociación
 
-# Referencias
-# https://www.cienciadedatos.net/documentos/43_reglas_de_asociacion#Arules_package
-# https://rdrr.io/cran/arules/man/discretize.html
+### Clustering No Jeraquizado
+```{r}
+data <- read.csv('heart_advanced_processed.csv')
 
-## Discretización y adaptación del dataset
+#all character columns to factor:
+heart2df <- mutate_if(data, is.character, as.factor)
+#all factor columns to integer:
+heart2df <- mutate_if(heart2df, is.factor, as.integer)
+
+```
+
+```{r}
+#Cargar y utilizar función IPAK
+
+df <-heart2df
+
+#normalizar las puntuaciones
+df <- scale(df)
+```
+
+```{r}
+
+#calcular la matriz de distacias
+m.distancia <- get_dist(df, method = "euclidean") 
+
+fviz_dist(m.distancia, gradient = list(low = "blue", mid = "white", high = "red"))
+```
+
+
+```{r}
+#estimar el número de clústers
+# wss, silhouette o gap_stat  method
+fviz_nbclust(df, kmeans, method = "wss")
+fviz_nbclust(df, kmeans, method = "silhouette")
+fviz_nbclust(df, kmeans, method = "gap_stat")
+```
+
+```{r}
+
+#calculamos los dos clústers
+k2 <- kmeans(df, centers = 2, nstart = 25)
+k2
+str(k2)
+
+#plotear los cluster
+fviz_cluster(k2, data = df)
+fviz_cluster(k2, data = df, ellipse.type = "euclid",repel = TRUE,star.plot = TRUE) #ellipse.type= "t", "norm", "euclid"
+fviz_cluster(k2, data = df, ellipse.type = "norm")
+fviz_cluster(k2, data = df, ellipse.type = "norm",palette = "Set2", ggtheme = theme_minimal())
+
+res2 <- hcut(df, k = 2, stand = TRUE)
+```
+
+
+```{r}
+df <-heart2df
+df <- scale(df)
+df<- as.data.frame(df)
+df$clus<-as.factor(k2$cluster)
+df
+
+df$clus<-factor(df$clus)
+data_long <- gather(df, caracteristica, valor, Age:Country, factor_key=TRUE)
+data_long
+
+ggplot(data_long, aes(as.factor(x = caracteristica), y = valor,group=clus, colour = clus)) +
+  stat_summary(fun = mean, geom="pointrange", size = 1)+
+  stat_summary(geom="line")
+
+ggsave(file="procesamiento_NO_Jerárquico(kmeans).pdf", width=15, height=15, dpi=1000)
+```
+
+### Reglas de asociación
+
+#### Referencias
+#### https://www.cienciadedatos.net/documentos/43_reglas_de_asociacion#Arules_package
+#### https://rdrr.io/cran/arules/man/discretize.html
+
+#### Discretización y adaptación del dataset
 ```{r}
 # Cargamos los datos
 library(tidyverse)
@@ -257,12 +343,9 @@ View(datos)
 
 # Generamos el nuevo CSV discretizado
 write.csv(datos,"heart_advanced_discretized.csv", row.names = FALSE)
-
 ```
 
-
 ```{r}
-
 # Librería arules
 library(arules)
 
