@@ -154,7 +154,6 @@ A continuación vamos a realizar un análisis de Cluster Jerarquizado sobre el d
 Luego nos quedamos con las columnas numéricas, ya que las categóricas y las binarias no pueden ser analizadas para calcular la similaridad entre dos datos. Y las escalamos para que los datos queden contenidas en el mismo eje de coordenadas y el agrupamiento no sea algo arbitrario.
 
 ```{r}
-library(cluster)
 data <- read.csv('heart_advanced_processed.csv')
 
 data <- tibble::rowid_to_column(data, "ID")
@@ -187,8 +186,6 @@ También se proporciona una manera mas gráfica de verlo usando la función kmea
 
 ```{r}
 kfit <- kmeans(d, 3)
-
-library(factoextra)
 
 fviz_cluster(list(data = as.matrix(d), cluster = kfit$cluster), labels = 7)
 ```
