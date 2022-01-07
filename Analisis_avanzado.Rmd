@@ -1,0 +1,412 @@
+---
+title: "Analisis_avanzado"
+output: html_document
+---
+
+# Análisis Avanzado
+
+## Instalación de librerías necesarias
+```{r}
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+packages <- c("tidyverse","cluster", "factoextra","NbClust","tidyr","dplyr", "arules")
+ipak(packages)
+```
+
+## Modificación del dataset
+
+```{r}
+# Leemos los datos del CSV
+data <- read.csv('heart.csv')
+
+# Creamos los datos de forma aleatoria
+weigth <- sample(c(5500:19500), 918, replace = TRUE)/100
+heigth <- sample(c(145:200), 918, replace = TRUE)/100
+countries <- c('Spain', 'France', 'Germany', 'England', 'Portugal', 'Cuba', 'China', 'South Africa', 'Italy')
+country <- sample(countries, 918, replace = TRUE)
+
+# Los agregamos al dataframe
+data$Weigth <- weigth
+data$Heigth <- heigth
+data$Country <- country
+data <- tibble::rowid_to_column(data, "ID")
+
+# Visualizamos los datos
+View(data)
+
+# Exportamos los nuevos datos a un CSV
+# write.csv(data,"heart_advanced_with_garbage_new.csv", row.names = FALSE)
+```
+
+## Preprocesamiento y visualización de datos
+
+```{r}
+library(tidyverse)
+
+heart <- read.table("heart_advanced_with_garbage.csv", na.strings="", header=TRUE, sep=",", dec=".")
+attach(heart)
+table(Cholesterol)
+table(Age)
+table(Sex)
+table(ChestPainType)
+table(RestingBP)
+table(FastingBS)
+table(RestingECG)
+table(MaxHR)
+table(ExerciseAngina)
+table(Oldpeak)
+table(ST_Slope)
+table(HeartDisease)
+table(Weigth)
+table(Heigth)
+table(Country)
+
+# Preprocesamiento Age
+Age -> heart$Age
+boxplot(heart$Age, horizontal = TRUE)
+
+# Preprocesamiento RestingBP
+RestingBP <- heart$RestingBP
+boxplot(RestingBP, horizontal = TRUE)
+boxplot.stats(RestingBP)
+heart_Sin_Out_RestingBP <- RestingBP[RestingBP>92 & RestingBP<170] 
+boxplot(heart_Sin_Out_RestingBP, horizontal = TRUE) 
+boxplot.stats(heart_Sin_Out_RestingBP)
+heart1 <- filter(heart, RestingBP > 92 & RestingBP<170) 
+str(heart1)
+head(heart1)
+
+# Preprocesamiento Cholesterol
+Cholesterol <- heart1$Cholesterol
+boxplot(Cholesterol, horizontal=TRUE)
+boxplot.stats(Cholesterol)
+heart1_Sin_Out_Cholesterol <- Cholesterol[Cholesterol >0 & Cholesterol < 404]
+boxplot(heart1_Sin_Out_Cholesterol, horizontal=TRUE)
+heart2_Sin_out_Cholesterol2 <- heart1_Sin_Out_Cholesterol[heart1_Sin_Out_Cholesterol > 110 & heart1_Sin_Out_Cholesterol< 369]
+boxplot(heart2_Sin_out_Cholesterol2, horizontal=TRUE)
+heart2 <- filter(heart1, Cholesterol > 110 & Cholesterol < 369)
+str(heart2)
+head(heart2)
+
+# Preprocesamiento MaxHR
+MaxHR <- heart2$MaxHR
+boxplot(MaxHR, horizontal=TRUE)
+boxplot.stats(MaxHR)
+str(heart2)
+
+# Preprocesamiento OldPeak
+OldPeak <- heart2$Oldpeak
+boxplot(OldPeak, horizontal=TRUE)
+boxplot.stats(OldPeak)
+heart2_Sin_out_OldPeak <- OldPeak[OldPeak < 3.6]
+boxplot(heart2_Sin_out_OldPeak, horizontal=TRUE)
+boxplot.stats(heart2_Sin_out_OldPeak)
+heart3<- filter(heart2, OldPeak < 3.6)
+
+# Preprocesamiento Weigth
+Weigth <- heart3$Weigth
+boxplot(Weigth, horizontal=TRUE)
+boxplot.stats(Weigth)
+heart3_Sin_out_Weigth <- Weigth[Weigth > 60 & Weigth < 190]
+boxplot(heart3_Sin_out_Weigth, horizontal=TRUE)
+boxplot.stats(heart3_Sin_out_Weigth)
+heart4<- filter(heart3, Weigth > 60 & Weigth < 190)
+
+# Preprocesamiento Heigth
+Heigth <- heart4$Heigth
+boxplot(Heigth, horizontal=TRUE)
+boxplot.stats(Heigth)
+heart4_Sin_out_Heigth <- Heigth[Heigth > 1.5 & Heigth < 2.0]
+boxplot(heart4_Sin_out_Heigth, horizontal=TRUE)
+boxplot.stats(heart4_Sin_out_Heigth)
+heart5<- filter(heart4, Heigth > 1.5 & Heigth < 2.0)
+
+# Dataset FINAL  sin outliers
+str(heart5) 
+View(heart5)
+
+# Comprobación de outliers
+boxplot(heart5$RestingBP, horizontal = TRUE)
+boxplot(heart5$Cholesterol, horizontal = TRUE)
+boxplot(heart5$MaxHR, horizontal = TRUE)
+boxplot(heart5$Oldpeak, horizontal = TRUE)
+boxplot(heart5$Weigth, horizontal = TRUE)
+boxplot(heart5$Heigth, horizontal = TRUE)
+
+# Resumen
+summary(heart5) 
+
+# Dataset procesado
+write.csv(heart5,"heart_advanced_processed.csv", row.names = FALSE)
+
+```
+
+## Aplicación del análisis no supervisado
+
+### Clustering Jeraquizado
+A continuación vamos a realizar un análisis de Cluster Jerarquizado sobre el dataset modificado una vez los datos ya están procesados, esto nos será útil para identificar conglomerados de datos que serán similares. Comenzamos leyendo los datos procesados para asignarlos a una variable y asociando un id único a cada dato para que el cluster pueda identificarlos.
+
+Luego nos quedamos con las columnas numéricas, ya que las categóricas y las binarias no pueden ser analizadas para calcular la similaridad entre dos datos. Y las escalamos para que los datos queden contenidas en el mismo eje de coordenadas y el agrupamiento no sea algo arbitrario.
+
+```{r}
+data <- read.csv('heart_advanced_processed.csv')
+
+data <- tibble::rowid_to_column(data, "ID")
+
+# Nos quedamos solo con las variables numéricas y no binarias
+data <- data[, c(1,2,5,6,7,9,14,15)] #
+
+data <- scale(data)
+```
+
+Una vez tenemos los datos que queremos escalados correctamente, procedemos a calcular los valores de distancia entre los datos con la media euclidiana, aunque se pueden usar otro tipos de argumentos, se ha elegido esta porque es la estándar. Luego calculamos el dendograma del cluster y lo pintamos para representar graficamente las agrupaciones de datos similares.
+
+```{r}
+# Dissimilarity matrix
+d <- dist(data, method = "euclidean")
+# Hierarchical clustering using Complete Linkage
+hc1 <- hclust(d, method = "complete" )
+# Plot the obtained dendrogram
+plot(hc1, cex = 0.6, hang = -1)
+```
+
+Como podemos observar entre la altura 6 y 8, es decir entre el mayor rango de similitud encontramos 3 agrupaciones de datos que son similares entre sí. Para verlo de manera mas gráfica recurriremos a demarcarlos.
+
+```{r}
+plot(hc1, cex = 0.6, hang = -1)
+rect.hclust(hc1, k = 3, border = 2:4)
+```
+
+También se proporciona una manera mas gráfica de verlo usando la función kmeans para calcular las similitudes con la distancia anteriormente calculada y pintándolo en una matriz de clústeres.
+
+```{r}
+kfit <- kmeans(d, 3)
+
+fviz_cluster(list(data = as.matrix(d), cluster = kfit$cluster), labels = 7)
+```
+
+### Clustering No Jeraquizado
+```{r}
+data <- read.csv('heart_advanced_processed.csv')
+
+#all character columns to factor:
+heart2df <- mutate_if(data, is.character, as.factor)
+#all factor columns to integer:
+heart2df <- mutate_if(heart2df, is.factor, as.integer)
+
+```
+
+```{r}
+#Cargar y utilizar función IPAK
+
+df <-heart2df
+
+#normalizar las puntuaciones
+df <- scale(df)
+```
+
+```{r}
+
+#calcular la matriz de distacias
+m.distancia <- get_dist(df, method = "euclidean") 
+
+fviz_dist(m.distancia, gradient = list(low = "blue", mid = "white", high = "red"))
+```
+
+
+```{r}
+#estimar el número de clústers
+# wss, silhouette o gap_stat  method
+fviz_nbclust(df, kmeans, method = "wss")
+fviz_nbclust(df, kmeans, method = "silhouette")
+fviz_nbclust(df, kmeans, method = "gap_stat")
+```
+
+```{r}
+
+#calculamos los dos clústers
+k2 <- kmeans(df, centers = 2, nstart = 25)
+k2
+str(k2)
+
+#plotear los cluster
+fviz_cluster(k2, data = df)
+fviz_cluster(k2, data = df, ellipse.type = "euclid",repel = TRUE,star.plot = TRUE) #ellipse.type= "t", "norm", "euclid"
+fviz_cluster(k2, data = df, ellipse.type = "norm")
+fviz_cluster(k2, data = df, ellipse.type = "norm",palette = "Set2", ggtheme = theme_minimal())
+
+res2 <- hcut(df, k = 2, stand = TRUE)
+```
+
+
+```{r}
+df <-heart2df
+df <- scale(df)
+df<- as.data.frame(df)
+df$clus<-as.factor(k2$cluster)
+df
+
+df$clus<-factor(df$clus)
+data_long <- gather(df, caracteristica, valor, Age:Country, factor_key=TRUE)
+data_long
+
+ggplot(data_long, aes(as.factor(x = caracteristica), y = valor,group=clus, colour = clus)) +
+  stat_summary(fun = mean, geom="pointrange", size = 1)+
+  stat_summary(geom="line")
+
+ggsave(file="procesamiento_NO_Jerárquico(kmeans).pdf", width=15, height=15, dpi=1000)
+```
+
+### Reglas de asociación
+
+#### Referencias
+#### https://www.cienciadedatos.net/documentos/43_reglas_de_asociacion#Arules_package
+#### https://rdrr.io/cran/arules/man/discretize.html
+
+#### Discretización y adaptación del dataset
+```{r}
+datos <- read_csv(file = "./heart_advanced_processed.csv", col_names = TRUE)
+
+datos$Sex<-replace(datos$Sex, datos$Sex == "M","Male") 
+datos$Sex<-replace(datos$Sex, datos$Sex == "F","Female")
+
+datos$FastingBS<-replace(datos$FastingBS, datos$FastingBS == 0,"No fasting blood sugar") 
+datos$FastingBS<-replace(datos$FastingBS, datos$FastingBS == 1,"Fasting blood sugar") 
+
+datos$ChestPainType<-replace(datos$ChestPainType, datos$ChestPainType == "ATA","Chest pain: ATA")
+datos$ChestPainType<-replace(datos$ChestPainType, datos$ChestPainType == "NAP","Chest pain: NAP")
+datos$ChestPainType<-replace(datos$ChestPainType, datos$ChestPainType == "ASY","Chest pain: ASY")
+datos$ChestPainType<-replace(datos$ChestPainType, datos$ChestPainType == "TA","Chest pain: TA")
+
+datos$RestingECG<-replace(datos$RestingECG, datos$RestingECG == "Normal","Resting ECG: Normal")
+datos$RestingECG<-replace(datos$RestingECG, datos$RestingECG == "ST","Resting ECG: ST")
+datos$RestingECG<-replace(datos$RestingECG, datos$RestingECG == "LVH","Resting ECG: LVH")
+
+datos$ExerciseAngina<-replace(datos$ExerciseAngina, datos$ExerciseAngina == "N","No exercise angina")
+datos$ExerciseAngina<-replace(datos$ExerciseAngina, datos$ExerciseAngina == "Y","Exercise angina")
+
+datos$ST_Slope<-replace(datos$ST_Slope, datos$ST_Slope == "Up","ST_Slope: Up")
+datos$ST_Slope<-replace(datos$ST_Slope, datos$ST_Slope == "Flat","ST_Slope: Flat")
+
+datos$HeartDisease<-replace(datos$HeartDisease, datos$HeartDisease == 0,"No heart disease")
+datos$HeartDisease<-replace(datos$HeartDisease, datos$HeartDisease == 1,"Heart disease")
+
+# Añadimos una columna para el identificador de cada fila
+datos <- tibble::rowid_to_column(datos, "ID")
+
+# Discretizamos las columnas de valores continuos
+datos$Age<-cut(datos$Age, c(0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80),include.lowest = TRUE, right = FALSE)
+datos$RestingBP<-cut(datos$RestingBP, c(90,100,110,120,130,140,150,160,170,180,
+                                        190,200), include.lowest = TRUE, right = FALSE)
+datos$Cholesterol<-cut(datos$Cholesterol, c(90,100,110,120,130,140,150,160,170,
+                                             180,190,200,210,220,230,240,250,260,
+                                             270,280,290,300,310,320,330,340,350,
+                                             360,370,380,390), include.lowest = TRUE, right = FALSE)
+datos$MaxHR<-cut(datos$MaxHR, c(70,75,80,85,90,95,100,105,110,115,120,125,130,
+                                 135,140,145,150,155,160,165,170,175,180,185,
+                                 190,195,200), include.lowest = TRUE, right = FALSE)
+datos$Oldpeak<-cut(datos$Oldpeak, c(0.,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0), 
+                    include.lowest = TRUE, right = FALSE)
+datos$Weigth<-cut(datos$Weigth, c(55.0,60.0,65.0,70.0,75.0,80.0,85.0,90.0,95.0,
+                                   100.0,105.0,110.0,115.0,120.0,125.0,130.0,
+                                   135.0,140.0,145.0,150.0,155.0,160.0,165.0,
+                                   170.0,175.0,180.0,185.0,190.0,195.0), 
+                    include.lowest = TRUE, right = FALSE)
+datos$Heigth<-cut(datos$Heigth, c(1.45,1.50,1.55,1.60,1.65,1.70,1.75,1.80,1.85,
+                                  1.90,1.95,2.00), 
+                    include.lowest = TRUE, right = FALSE)
+
+datos$Age <- paste("Age:", datos$Age, sep=" ")
+datos$RestingBP <- paste("RestingBP:", datos$RestingBP, sep=" ")
+datos$Cholesterol <- paste("Cholesterol:", datos$Cholesterol, sep=" ")
+datos$MaxHR <- paste("MaxHR:", datos$MaxHR, sep=" ")
+datos$Oldpeak <- paste("Oldpeak:", datos$Oldpeak, sep=" ")
+datos$Weigth <- paste("Weigth:", datos$Weigth, sep=" ")
+datos$Heigth <- paste("Heigth:", datos$Heigth, sep=" ")
+
+# Modificamos los valores de algunas columnas para poder interpretar los datos
+#datos<-replace(datos$Sex, datos$Sex<"M","Male") 
+
+
+# Mostramos el dataset discretizado
+View(datos)
+
+# Generamos el nuevo CSV discretizado
+write.csv(datos,"heart_advanced_discretized.csv", row.names = FALSE)
+```
+
+```{r}
+# Objeto de tipo transaction
+transacciones <- read.transactions(file = "./heart_advanced_discretized.csv",
+                                   format = "basket",
+                                   sep = ",",
+                                   header = TRUE,
+                                   cols = 1,
+                                   rm.duplicates = TRUE)
+
+# Mostramos las 5 primeras transacciones
+inspect(transacciones[1:5])
+
+# Tamaño de cada transacción
+tamanyos <- size(transacciones)
+summary(tamanyos)
+
+data.frame(tamanyos) %>%
+  ggplot(aes(x = tamanyos)) +
+  geom_histogram() +
+  labs(title = "Distribución del tamaño de las transacciones",
+       x = "Tamaño") +
+  theme_bw()
+
+# Mostramos los 5 elementos que más aparecen
+frecuencia_items <- itemFrequency(x = transacciones, type = "absolute")
+frecuencia_items %>% sort(decreasing = TRUE) %>% head(5)
+
+soporte <- 200 / dim(transacciones)[1]
+itemsets <- apriori(data = transacciones,
+                    parameter = list(support = soporte,
+                                     minlen = 1,
+                                     maxlen = 20,
+                                     target = "frequent itemset"))
+
+summary(itemsets)
+
+# Se muestran los top 5 itemsets de mayor a menor soporte
+top_5_itemsets <- sort(itemsets, by = "support", decreasing = TRUE)[1:5]
+inspect(top_5_itemsets)
+
+# Para representarlos con ggplot se convierte a dataframe 
+as(top_5_itemsets, Class = "data.frame") %>%
+  ggplot(aes(x = reorder(items, support), y = support)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Itemsets más frecuentes", x = "itemsets") +
+  theme_bw()
+
+# Se muestran los 10 itemsets más frecuentes formados por más de un item.
+inspect(sort(itemsets[size(itemsets) > 1], decreasing = TRUE)[1:10])
+
+# Se muestran los 10 itemsets más frecuentes formados por más de dos items.
+inspect(sort(itemsets[size(itemsets) > 2], decreasing = TRUE)[1:10])
+
+# Reglas de asociación
+soporte <- 30 / dim(transacciones)[1]
+reglas <- apriori(data = transacciones,
+                  parameter = list(support = soporte,
+                                   confidence = 0.70,
+                                   # Se especifica que se creen reglas
+                                   target = "rules"),
+                  appearance = list(rhs = "Heart disease"))
+
+summary(reglas)
+
+# LHS : Antecedente
+# RHS : Consecuente
+inspect(sort(x = reglas, decreasing = TRUE, by = "confidence"))
+
+```
